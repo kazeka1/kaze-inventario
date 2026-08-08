@@ -199,6 +199,7 @@ body.dark .table-wrap thead th { background: #202024; }
     <button class="tab-btn active" data-tab="productos">Productos</button>
     <button class="tab-btn" data-tab="disponibles">Disponibles</button>
     <button class="tab-btn" data-tab="insumos">Insumos</button>
+    <button class="tab-btn" data-tab="inventario">Inventario</button>
     <button class="tab-btn" data-tab="pedidos">Salidas</button>
   </div>
 
@@ -340,6 +341,34 @@ body.dark .table-wrap thead th { background: #202024; }
             <th>Insumo</th><th>Precio base</th><th>% Rep.</th><th>Precio real repos.</th><th>Stock</th><th>Mínimo</th><th>Estado</th><th>Acciones</th>
           </tr></thead>
           <tbody id="tablaInsumos"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: Inventario -->
+  <div class="tab-content" id="tab-inventario">
+    <div class="card">
+      <div class="header-bar">
+        <h2>Inventario completo (entradas · stock · salidas)</h2>
+      </div>
+      <div id="inventarioResumen" class="sumatoria-repos" style="margin-top:0;margin-bottom:14px;"></div>
+      <h3 style="margin-bottom:10px;font-size:15px;">Prendas</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>Producto</th><th>Tallas (stock)</th><th>Entradas</th><th>Stock actual</th><th>Salidas</th><th>Valor stock (repos.)</th>
+          </tr></thead>
+          <tbody id="tablaInvProductos"></tbody>
+        </table>
+      </div>
+      <h3 style="margin:20px 0 10px;font-size:15px;">Insumos</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>Insumo</th><th>Entradas</th><th>Stock actual</th><th>Salidas</th><th>Precio real repos.</th>
+          </tr></thead>
+          <tbody id="tablaInvInsumos"></tbody>
         </table>
       </div>
     </div>
@@ -823,6 +852,7 @@ function renderAll() {
   renderProductos();
   renderDisponibles();
   renderInsumos();
+  renderInventario();
   renderPedidos();
   renderPedidoForm();
 }
@@ -921,6 +951,55 @@ function renderDisponibles() {
     </tr>`;
   }
   tbody.innerHTML = html || '<tr><td colspan="6" style="text-align:center;color:#999;">No hay productos con stock</td></tr>';
+}
+
+function renderInventario() {
+  const tbodyP = document.getElementById('tablaInvProductos');
+  const tbodyI = document.getElementById('tablaInvInsumos');
+  if (!tbodyP || !tbodyI) return;
+
+  let htmlP = '';
+  let eTot = 0, sTot = 0, stTot = 0, vTot = 0;
+  for (const p of data.products) {
+    const st = stockTotal(p);
+    const sal = data.orders.filter(o => o.productCode === p.code).reduce((a, o) => a + o.qty, 0);
+    const ent = sal + st;
+    const valor = precioRealRepos(p.purchasePrice||0, p) * st;
+    eTot += ent; sTot += sal; stTot += st; vTot += valor;
+    htmlP += `<tr>
+      <td><strong>${esc(p.code)}</strong> - ${esc(p.desc||'')} ${esc(p.color||'')}</td>
+      <td style="white-space:normal;">${esc(sizesText(p))}</td>
+      <td>${ent}</td>
+      <td><strong>${st}</strong></td>
+      <td>${sal}</td>
+      <td>$${valor.toFixed(2)}</td>
+    </tr>`;
+  }
+  tbodyP.innerHTML = htmlP || '<tr><td colspan="6" style="text-align:center;color:#999;">Sin productos registrados</td></tr>';
+
+  let htmlI = '';
+  let ieTot = 0, isTot = 0, istTot = 0, ivTot = 0;
+  for (const s of data.supplies) {
+    const salAt = data.orders.reduce((a, o) => a + (((o.usedSupplies||[]).includes(s.name)) ? o.qty : 0), 0);
+    const entradas = salAt + (s.stock||0);
+    const real = precioRealRepos(s.price||0, s);
+    ieTot += entradas; isTot += salAt; istTot += (s.stock||0); ivTot += real * (s.stock||0);
+    htmlI += `<tr>
+      <td><strong>${esc(s.name)}</strong></td>
+      <td>${entradas}</td>
+      <td><strong>${s.stock||0}</strong></td>
+      <td>${salAt}</td>
+      <td>$${real.toFixed(2)}</td>
+    </tr>`;
+  }
+  tbodyI.innerHTML = htmlI || '<tr><td colspan="5" style="text-align:center;color:#999;">Sin insumos registrados</td></tr>';
+
+  document.getElementById('inventarioResumen').innerHTML = `
+    <div class="suma-item"><span>Prendas — entradas totales:</span><strong>${eTot}</strong></div>
+    <div class="suma-item"><span>Prendas — stock actual total:</span><strong>${stTot}</strong></div>
+    <div class="suma-item suma-rojo"><span>Prendas — salidas totales:</span><strong>${sTot}</strong></div>
+    <div class="suma-item"><span>Prendas — valor del stock (precio real de reposición):</span><strong>$${vTot.toFixed(2)}</strong></div>
+    <div class="suma-item suma-note" style="margin-top:6px;">Insumos — entradas: ${ieTot} · stock: ${istTot} · salidas: ${isTot} · valor stock: $${ivTot.toFixed(2)}</div>`;
 }
 
 function pctRepos(o) {
