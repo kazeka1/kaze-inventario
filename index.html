@@ -117,29 +117,9 @@ tr:hover { background: #f8f9fa; }
 <div class="container">
   <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
     <h1 style="font-size:22px;color:#1a1a2e;">Kaze - Inventario</h1>
-    <button class="btn btn-sm" style="background:#e5e7eb;" onclick="toggleSetup()">⚙️ Conectar nube</button>
   </div>
 
-  <div id="statusBar" class="status-local"><span class="dot dot-yellow"></span> 💻 Modo local — los datos solo están en este dispositivo</div>
-
-  <!-- Setup Panel -->
-  <div class="card" id="setupPanel">
-    <h2>Conectar al servidor (PostgreSQL)</h2>
-    <div style="margin-bottom:14px;padding:12px;background:#f8f9fa;border-radius:8px;">
-      <div class="step"><span class="step-num">1</span><span>El servidor debe estar corriendo con su base de datos PostgreSQL</span></div>
-      <div class="step"><span class="step-num">2</span><span>Escribe la dirección del servidor (ej: <code>http://localhost:3000</code> o el link de tu servidor en la nube)</span></div>
-      <div class="step"><span class="step-num">3</span><span>Dale a <strong>"Conectar"</strong>. Los datos se guardan y comparten desde PostgreSQL.</span></div>
-    </div>
-    <div class="setup-field">
-      <label>URL del servidor</label>
-      <input type="text" id="srvUrl" placeholder="http://localhost:3000">
-    </div>
-    <div class="form-actions">
-      <button class="btn btn-primary" onclick="conectarServidor()">Conectar</button>
-      <button class="btn btn-sm" style="background:#e5e7eb;" onclick="desconectarServidor()">Desconectar (modo local)</button>
-    </div>
-    <div id="setupMessage" style="margin-top:10px;font-size:13px;"></div>
-  </div>
+  <div id="statusBar" class="status-local"><span class="dot dot-yellow"></span> 💻 Conectando a Supabase...</div>
 
   <!-- TABS -->
   <div class="tabs">
@@ -370,11 +350,13 @@ tr:hover { background: #f8f9fa; }
 </div>
 
 <script>
-// ===== SERVIDOR CONFIG =====
-let srvUrl = null;
-let useCloud = false;
+// ===== SUPABASE CONFIG =====
+const SUPABASE_URL = 'https://jqtynumatfwhtrcriypy.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_6QoLvfKK7Oom-wrgMaW72g_okEJqKk7';
+const SUPABASE_TABLE = 'app_data';
+let useSync = false;
 let syncTimer = null;
-let lastSyncAt = 0; // timestamp ISO de la última escritura que confirmamos
+let lastSyncAt = 0;
 let syncing = false;
 
 const DEFAULT_SUPPLIES = [
@@ -384,70 +366,48 @@ const DEFAULT_SUPPLIES = [
   { name: 'Bolsa de empaque', stock: 50, minStock: 10 }
 ];
 
-function apiURL(path) {
-  return (srvUrl || '') + path;
-}
-
-function loadCloudConfig() {
-  try {
-    const saved = localStorage.getItem('kaze_srv_config');
-    if (saved) {
-      const cfg = JSON.parse(saved);
-      srvUrl = cfg.url || '';
-      document.getElementById('srvUrl').value = srvUrl;
-      return true;
-    }
-  } catch(e) {}
-  return false;
-}
-
-function saveCloudConfig() {
-  localStorage.setItem('kaze_srv_config', JSON.stringify({ url: srvUrl }));
-}
-
-function toggleSetup() {
-  document.getElementById('setupPanel').classList.toggle('active');
-}
-
 function updateStatusBar(text, cls) {
   const bar = document.getElementById('statusBar');
-  bar.className = cls || (useCloud ? 'status-cloud' : 'status-local');
+  bar.className = cls || (useSync ? 'status-cloud' : 'status-local');
   if (text) bar.innerHTML = text;
-  else if (useCloud) bar.innerHTML = '<span class="dot dot-blue"></span> 🐘 Conectado a PostgreSQL — datos sincronizados entre dispositivos';
+  else if (useSync) bar.innerHTML = '<span class="dot dot-blue"></span> 🐘 Conectado a Supabase (PostgreSQL) — datos sincronizados entre dispositivos';
   else bar.innerHTML = '<span class="dot dot-yellow"></span> 💻 Modo local — los datos solo están en este dispositivo';
 }
 
-// ===== SERVIDOR API =====
-async function srvRead() {
-  const res = await fetch(apiURL('/api/data'));
+// ===== SUPABASE API (REST = PostgREST) =====
+async function supabaseRead() {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?id=eq.main&select=data,updated_at`, {
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_KEY
+    }
+  });
   if (!res.ok) throw new Error('Error al leer (' + res.status + ')');
-  const json = await res.json();
-  return { data: json.data, updated_at: json.updated_at };
+  const rows = await res.json();
+  if (rows.length === 0) return { data: null, updated_at: null };
+  return { data: rows[0].data, updated_at: rows[0].updated_at };
 }
 
-async function srvWrite(data) {
-  const res = await fetch(apiURL('/api/data'), {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data)
+async function supabaseWrite(data) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?id=eq.main`, {
+    method: 'POST',
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': 'resolution=merge-duplicates,return=representation'
+    },
+    body: JSON.stringify({ id: 'main', data: data, updated_at: new Date().toISOString() })
   });
   if (!res.ok) throw new Error('Error al guardar (' + res.status + ')');
-  const json = await res.json();
-  return json.updated_at;
+  const rows = await res.json();
+  return rows.length > 0 ? rows[0].updated_at : new Date().toISOString();
 }
 
-async function conectarServidor() {
-  const msg = document.getElementById('setupMessage');
-  srvUrl = document.getElementById('srvUrl').value.trim().replace(/\/+$/, '');
-  if (!srvUrl) { msg.innerHTML = '<span style="color:#dc2626;">Escribe la URL del servidor</span>'; return; }
-  msg.innerHTML = '<span style="color:#666;">Conectando...</span>';
+async function conectarSupabase() {
   try {
-    const remote = await srvRead();
-    saveCloudConfig();
-    useCloud = true;
-    msg.innerHTML = '';
-    document.getElementById('setupPanel').classList.remove('active');
-    // Si el servidor tiene datos, úsalos; si no, sube los locales
+    const remote = await supabaseRead();
+    useSync = true;
     if (remote.data && remote.data.products) {
       data = {
         products: remote.data.products || [],
@@ -460,28 +420,19 @@ async function conectarServidor() {
       renderAll();
     } else {
       data.updatedAt = Date.now();
+      localStorage.setItem('kaze_inventario', JSON.stringify(data));
       saveData(true);
     }
     updateStatusBar();
     iniciarSync();
-    alert('🐘 Conectado a PostgreSQL. Los datos se comparten entre dispositivos.');
   } catch(err) {
-    useCloud = false;
-    msg.innerHTML = `<span style="color:#dc2626;">No se pudo conectar: ${err.message}. Verifica la URL del servidor.</span>`;
+    useSync = false;
+    updateStatusBar('<span class="dot dot-red"></span> ⚠️ Sin conexión a Supabase: ' + err.message, 'status-error');
   }
-}
-
-function desconectarServidor() {
-  useCloud = false;
-  stopSync();
-  localStorage.removeItem('kaze_srv_config');
-  document.getElementById('setupPanel').classList.remove('active');
-  updateStatusBar();
 }
 
 function iniciarSync() {
   stopSync();
-  // Poll cada 10s por cambios remotos
   syncTimer = setInterval(syncCheck, 10000);
 }
 
@@ -490,13 +441,12 @@ function stopSync() {
 }
 
 async function syncCheck() {
-  if (!useCloud || syncing) return;
+  if (!useSync || syncing) return;
   syncing = true;
   try {
-    const remote = await srvRead();
+    const remote = await supabaseRead();
     const remoteTime = remote.updated_at ? new Date(remote.updated_at).getTime() : 0;
     if (remote.data && remoteTime > lastSyncAt) {
-      // El servidor tiene algo más nuevo - cargarlo
       data = {
         products: remote.data.products || [],
         supplies: remote.data.supplies || DEFAULT_SUPPLIES,
@@ -507,11 +457,15 @@ async function syncCheck() {
       lastSyncAt = remoteTime;
       renderAll();
       const bar = document.getElementById('statusBar');
-      bar.innerHTML = '<span class="dot dot-blue"></span> 🐘 Sincronizado con PostgreSQL (actualizado)';
+      bar.innerHTML = '<span class="dot dot-blue"></span> 🐘 Sincronizado con Supabase (actualizado)';
       setTimeout(updateStatusBar, 3000);
+    } else if (!remote.data) {
+      // Primera vez en la nube: subir lo local
+      data.updatedAt = Date.now();
+      saveData(true);
     }
   } catch(e) {
-    updateStatusBar('<span class="dot dot-red"></span> ⚠️ Error de conexión con el servidor', 'status-error');
+    updateStatusBar('<span class="dot dot-red"></span> ⚠️ Error de conexión con Supabase', 'status-error');
     setTimeout(updateStatusBar, 5000);
   }
   syncing = false;
@@ -536,20 +490,20 @@ function loadData() {
     }
   } catch(e) {}
   data = getDefaultData();
-  saveData(true);
+  localStorage.setItem('kaze_inventario', JSON.stringify(data));
 }
 
 function saveData(force) {
   data.updatedAt = Date.now();
   localStorage.setItem('kaze_inventario', JSON.stringify(data));
-  if (useCloud) {
-    if (syncTimer) clearInterval(syncTimer); // pausa momentánea del polling
-    srvWrite(data).then((serverTime) => {
+  if (useSync) {
+    if (syncTimer) clearInterval(syncTimer);
+    supabaseWrite(data).then((serverTime) => {
       lastSyncAt = new Date(serverTime).getTime();
       iniciarSync();
     }).catch(() => {
       iniciarSync();
-      updateStatusBar('<span class="dot dot-red"></span> ⚠️ No se pudo guardar en el servidor', 'status-error');
+      updateStatusBar('<span class="dot dot-red"></span> ⚠️ No se pudo guardar en Supabase', 'status-error');
       setTimeout(updateStatusBar, 5000);
     });
   }
@@ -989,11 +943,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 actualizarTallas();
 actualizarEditTallas();
 loadData();
-if (loadCloudConfig()) {
-  conectarServidor().then(() => {
-    if (useCloud) updateStatusBar();
-  });
-}
+conectarSupabase();
 renderAll();
 </script>
 </body>
