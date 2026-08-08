@@ -726,13 +726,13 @@ function renderPedidoForm() {
   // Checkboxes de insumos
   const list = document.getElementById('pedidoInsumosList');
   list.innerHTML = '';
-  for (const s of data.supplies) {
+  data.supplies.forEach((s, i) => {
     const div = document.createElement('div');
     div.className = 'pedido-insumo-item';
-    div.innerHTML = `<input type="checkbox" id="ins_${esc(s.name)}" checked onchange="actualizarCostoInsumos()">
-      <label for="ins_${esc(s.name)}">${esc(s.name)} <strong>$${(s.price||0).toFixed(2)}</strong> (${s.stock||0})</label>`;
+    div.innerHTML = `<input type="checkbox" id="ins_cb_${i}" value="${esc(s.name)}" checked onchange="updateCostoInsumos()">
+      <label for="ins_cb_${i}">${esc(s.name)} <strong>$${(s.price||0).toFixed(2)}</strong> (${s.stock||0})</label>`;
     list.appendChild(div);
-  }
+  });
   updateCostoInsumos();
 }
 
@@ -776,7 +776,7 @@ function updateCostoInsumos() {
   const checks = document.querySelectorAll('#pedidoInsumosList input[type="checkbox"]');
   for (const cb of checks) {
     if (cb.checked) {
-      const name = cb.id.replace('ins_', '');
+      const name = cb.value;
       const s = data.supplies.find(x => x.name === name);
       if (s) total += (s.price || 0);
     }
@@ -797,7 +797,7 @@ function agregarASalida() {
   let costoIns = 0;
   for (const cb of checks) {
     if (cb.checked) {
-      const name = cb.id.replace('ins_', '');
+      const name = cb.value;
       const s = data.supplies.find(x => x.name === name);
       if (s) { usados.push(name); costoIns += (s.price||0); }
     }
@@ -883,6 +883,7 @@ function confirmarSalida() {
   const granTotal = salidaActual.reduce((acc, a) => acc + a.total, 0);
   const now = new Date();
   const dateStr = now.toLocaleDateString('es-ES') + ' ' + now.toLocaleTimeString('es-ES', { hour:'2-digit', minute:'2-digit' });
+  const salidaId = Date.now() + '_' + Math.random().toString(36).slice(2, 7);
 
   for (const a of salidaActual) {
     const p = data.products.find(x => x.code === a.code);
@@ -892,6 +893,7 @@ function confirmarSalida() {
       if (s) s.stock = Math.max(0, (s.stock||0) - a.qty);
     }
     data.orders.push({
+      salidaId,
       date: dateStr,
       productCode: a.code,
       productDesc: a.desc,
@@ -914,10 +916,10 @@ function confirmarSalida() {
 
 function renderPedidos() {
   const tbody = document.getElementById('tablaPedidos');
-  // Agrupar por salida (misma fecha + granTotal)
+  // Agrupar por salida (mismo salidaId; los registros viejos sin id van solos)
   const grupos = [];
-  for (const o of [...data.orders].reverse()) {
-    const key = o.date + '|' + (o.granTotal||0);
+  [...data.orders].reverse().forEach((o, i) => {
+    const key = o.salidaId || ('old_' + i);
     const g = grupos.find(x => x.key === key);
     if (g) {
       g.items.push(o);
@@ -925,7 +927,7 @@ function renderPedidos() {
     } else {
       grupos.push({ key, date: o.date, granTotal: o.granTotal || (o.totalSalida||0), total: o.totalSalida||0, items: [o] });
     }
-  }
+  });
   let html = '';
   for (const g of grupos) {
     const detalle = g.items.map(o => `${esc(o.productCode)} - ${esc(o.productDesc)}(${esc(o.color||'-')}) T.${esc(o.talla||'-')} x${o.qty}`).join('<br>');
