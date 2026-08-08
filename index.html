@@ -510,6 +510,7 @@ let useSync = false;
 let syncTimer = null;
 let lastSyncAt = 0;
 let syncing = false;
+const SYNC_INTERVAL_MS = 60000;
 
 const DEFAULT_SUPPLIES = [
   { name: 'Etiqueta', stock: 50, minStock: 10, price: 0.10, repPct: 50 },
@@ -538,6 +539,19 @@ async function supabaseRead() {
   const rows = await res.json();
   if (rows.length === 0) return { data: null, updated_at: null };
   return { data: rows[0].data, updated_at: rows[0].updated_at };
+}
+
+// Lectura ligera: solo la fecha de última actualización (para ahorrar datos)
+async function supabasePing() {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?id=eq.main&select=updated_at`, {
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_KEY
+    }
+  });
+  if (!res.ok) return null;
+  const rows = await res.json();
+  return rows.length > 0 ? rows[0].updated_at : null;
 }
 
 async function supabaseWrite(data) {
@@ -587,8 +601,16 @@ async function conectarSupabase() {
 
 function iniciarSync() {
   stopSync();
-  syncTimer = setInterval(syncCheck, 10000);
+  syncTimer = setInterval(syncCheck, SYNC_INTERVAL_MS);
 }
+
+// Al volver a la pestaña o ventana, sincronizar de inmediato
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && useSync) syncCheck();
+});
+window.addEventListener('focus', () => {
+  if (useSync) syncCheck();
+});
 
 function stopSync() {
   if (syncTimer) { clearInterval(syncTimer); syncTimer = null; }
@@ -596,11 +618,21 @@ function stopSync() {
 
 async function syncCheck() {
   if (!useSync || syncing) return;
+  if (document.hidden) return; // no consumir datos con la app en segundo plano
   syncing = true;
   try {
+    // 1) ping ligero: solo la fecha; si no cambió, no descargamos el inventario completo
+    const dateStr = await supabasePing();
+    if (!dateStr) {
+      // Primera vez en la nube: subir lo local
+      data.updatedAt = Date.now();
+      saveData(true);
+      return;
+    }
+    const remoteTime = new Date(dateStr).getTime();
+    if (remoteTime <= lastSyncAt) return; // sin cambios: cero descargas innecesarias
     const remote = await supabaseRead();
-    const remoteTime = remote.updated_at ? new Date(remote.updated_at).getTime() : 0;
-    if (remote.data && remoteTime > lastSyncAt) {
+    if (remote.data && remote.data.products) {
       data = {
         products: (remote.data.products || []).map(migrarSizes),
         supplies: remote.data.supplies || DEFAULT_SUPPLIES,
@@ -614,10 +646,6 @@ async function syncCheck() {
       const bar = document.getElementById('statusBar');
       bar.innerHTML = '<span class="dot dot-blue"></span> 🐘 Sincronizado con Supabase (actualizado)';
       setTimeout(updateStatusBar, 3000);
-    } else if (!remote.data) {
-      // Primera vez en la nube: subir lo local
-      data.updatedAt = Date.now();
-      saveData(true);
     }
   } catch(e) {
     updateStatusBar('<span class="dot dot-red"></span> ⚠️ Error de conexión con Supabase', 'status-error');
