@@ -336,11 +336,19 @@ tr:hover { background: #f8f9fa; }
     </div>
 
     <div class="card">
-      <h2>Historial de salidas</h2>
+      <div class="header-bar">
+        <h2>Historial de salidas por fecha</h2>
+        <div class="header-actions">
+          <input type="date" id="filtroFecha" onchange="renderPedidos()" style="padding:8px 10px;border:1px solid #ddd;border-radius:8px;font-size:13px;">
+          <button class="btn btn-sm btn-primary" onclick="filtrarHoy()">Hoy</button>
+          <button class="btn btn-sm" style="background:#e5e7eb;" onclick="limpiarFiltroFecha()">Todas</button>
+        </div>
+      </div>
+      <div id="resumenFecha" class="sumatoria-repos" style="margin-top:0;margin-bottom:14px;"></div>
       <div class="table-wrap">
         <table>
           <thead><tr>
-            <th>Fecha</th><th>Producto</th><th>Cant.</th><th>Total</th><th>Reponer +50%</th><th>Insumos usados</th>
+            <th>Fecha</th><th>Producto</th><th>Cant.</th><th>Total</th><th>Reponer</th><th>Insumos usados</th>
           </tr></thead>
           <tbody id="tablaPedidos"></tbody>
         </table>
@@ -971,11 +979,36 @@ function confirmarSalida() {
   alert(`✅ Salida registrada. Total: $${granTotal.toFixed(2)} — Reponer: $${granReponer.toFixed(2)}`);
 }
 
+function fechaInputToEs(f) {
+  if (!f) return '';
+  const p = f.split('-');
+  return `${+p[2]}/${+p[1]}/${p[0]}`;
+}
+
+function fechaInputHoy() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
+function filtrarHoy() {
+  document.getElementById('filtroFecha').value = fechaInputHoy();
+  renderPedidos();
+}
+
+function limpiarFiltroFecha() {
+  document.getElementById('filtroFecha').value = '';
+  renderPedidos();
+}
+
 function renderPedidos() {
   const tbody = document.getElementById('tablaPedidos');
+  const filtro = fechaInputToEs(document.getElementById('filtroFecha').value);
+  const visibles = filtro
+    ? [...data.orders].reverse().filter(o => (o.date||'').startsWith(filtro))
+    : [...data.orders].reverse();
   // Agrupar por salida (mismo salidaId; los registros viejos sin id van solos)
   const grupos = [];
-  [...data.orders].reverse().forEach((o, i) => {
+  visibles.forEach((o, i) => {
     const key = o.salidaId || ('old_' + i);
     const g = grupos.find(x => x.key === key);
     if (g) {
@@ -986,22 +1019,43 @@ function renderPedidos() {
     }
   });
   let html = '';
+  let totTotal = 0, totReponer = 0;
   for (const g of grupos) {
-    const detalle = g.items.map(o => `${esc(o.productCode)} - ${esc(o.productDesc)}(${esc(o.color||'-')}) T.${esc(o.talla||'-')} x${o.qty}`).join('<br>');
+    const detalle = detallePrevia(g.items);
     const insumos = [...new Set(g.items.flatMap(o => o.usedSupplies||[]))].join(', ');
     const reponer = (g.items[0] && g.items[0].granReponer != null)
       ? g.items[0].granReponer
       : (g.items[0] && g.items[0].reponer != null ? g.items[0].reponer : g.granTotal * 1.5);
+    totTotal += g.total;
+    totReponer += reponer;
     html += `<tr>
       <td>${esc(g.date)}</td>
-      <td>${detalle}</td>
+      <td>${detallePrevia(g.items)}</td>
       <td>${g.items.reduce((a,o)=>a+o.qty,0)}</td>
       <td>$${g.total.toFixed(2)}</td>
       <td>$${reponer.toFixed(2)}</td>
       <td>${insumos ? esc(insumos) : 'Ninguno'}</td>
     </tr>`;
   }
-  tbody.innerHTML = html || '<tr><td colspan="6" style="text-align:center;color:#999;">No hay salidas registradas</td></tr>';
+  tbody.innerHTML = html || '<tr><td colspan="6" style="text-align:center;color:#999;">No hay salidas registradas' + (filtro ? ' en esta fecha' : '') + '</td></tr>';
+
+  const resumen = document.getElementById('resumenFecha');
+  if (grupos.length === 0) {
+    resumen.innerHTML = '<div class="suma-item suma-note">Sin salidas' + (filtro ? ' en esa fecha' : ' aún') + '.</div>';
+  } else {
+    resumen.innerHTML = `<div class="suma-item">
+        <span>${filtro ? 'Día ' + filtro : 'Todo el período'} — ${grupos.length} salida(s):</span>
+        <strong>Total: $${totTotal.toFixed(2)}</strong>
+      </div>
+      <div class="suma-item suma-rojo">
+        <span>Dinero para reponer lo vendido:</span>
+        <strong>$${totReponer.toFixed(2)}</strong>
+      </div>`;
+  }
+}
+
+function detallePrevia(items) {
+  return items.map(o => `${esc(o.productCode)} - ${esc(o.productDesc)}(${esc(o.color||'-')}) T.${esc(o.talla||'-')} x${o.qty}`).join('<br>');
 }
 
 // ===== CRUD PRODUCTOS =====
