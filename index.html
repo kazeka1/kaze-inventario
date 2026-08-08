@@ -126,7 +126,7 @@ tr:hover { background: #f8f9fa; }
     <button class="tab-btn active" data-tab="productos">Productos</button>
     <button class="tab-btn" data-tab="disponibles">Disponibles</button>
     <button class="tab-btn" data-tab="insumos">Insumos</button>
-    <button class="tab-btn" data-tab="pedidos">Pedidos</button>
+    <button class="tab-btn" data-tab="pedidos">Salidas</button>
   </div>
 
   <!-- TAB: Productos -->
@@ -229,10 +229,14 @@ tr:hover { background: #f8f9fa; }
   <div class="tab-content" id="tab-insumos">
     <div class="card">
       <h2>Agregar / Editar insumo</h2>
-      <div class="form-grid" style="grid-template-columns:1fr 1fr 1fr auto;">
+      <div class="form-grid" style="grid-template-columns:1fr 1fr 1fr 1fr auto;">
         <div class="form-group">
           <label>Nombre</label>
           <input type="text" id="insName" placeholder="Ej: Bolsa">
+        </div>
+        <div class="form-group">
+          <label>Precio del insumo ($)</label>
+          <input type="number" id="insPrice" placeholder="0.00" step="0.01" min="0">
         </div>
         <div class="form-group">
           <label>Stock actual</label>
@@ -253,7 +257,7 @@ tr:hover { background: #f8f9fa; }
       <div class="table-wrap">
         <table>
           <thead><tr>
-            <th>Insumo</th><th>Stock</th><th>Mínimo</th><th>Estado</th><th>Acciones</th>
+            <th>Insumo</th><th>Precio</th><th>Stock</th><th>Mínimo</th><th>Estado</th><th>Acciones</th>
           </tr></thead>
           <tbody id="tablaInsumos"></tbody>
         </table>
@@ -261,34 +265,65 @@ tr:hover { background: #f8f9fa; }
     </div>
   </div>
 
-  <!-- TAB: Pedidos -->
+  <!-- TAB: Salidas -->
   <div class="tab-content" id="tab-pedidos">
     <div class="card">
-      <h2>Registrar pedido</h2>
-      <div class="form-grid" style="grid-template-columns:1fr 1fr 1fr;">
+      <h2>1. Seleccionar prenda para salida</h2>
+      <div class="form-grid" style="grid-template-columns:2fr 1fr 1fr auto;">
         <div class="form-group">
-          <label>Producto</label>
-          <select id="pedidoProducto" style="padding:9px 10px;border:1px solid #ddd;border-radius:8px;font-size:13px;"></select>
+          <label>Buscar prenda</label>
+          <input type="text" class="search-box" id="salidaBuscar" placeholder="Buscar por código, descripción o talla..." oninput="renderSalidaSelect()" style="max-width:100%;">
+          <select id="pedidoProducto" style="margin-top:6px;padding:9px 10px;border:1px solid #ddd;border-radius:8px;font-size:13px;" onchange="verInfoPrenda()"></select>
         </div>
         <div class="form-group">
           <label>Cantidad</label>
           <input type="number" id="pedidoCant" placeholder="1" min="1" value="1">
         </div>
         <div class="form-group" style="align-self:end;">
-          <button class="btn btn-success" onclick="registrarPedido()">Registrar pedido</button>
+          <button class="btn btn-success" onclick="agregarASalida()" style="width:100%;">+ Agregar</button>
         </div>
       </div>
-      <div style="margin-top:10px;">
-        <label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:6px;">Insumos a descontar (desmarca los que no uses):</label>
+
+      <div id="prendaInfo" style="margin-top:12px;padding:12px;background:#f8f9fa;border-radius:8px;display:none;font-size:13px;"></div>
+
+      <div style="margin-top:14px;">
+        <label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:6px;">2. Insumos usados por prenda (desmarca los que NO se usaron):</label>
         <div class="pedido-insumos" id="pedidoInsumosList"></div>
+        <div id="insumosCosto" style="font-size:13px;font-weight:700;color:#1a1a2e;margin-top:6px;"></div>
       </div>
     </div>
+
     <div class="card">
-      <h2>Historial de pedidos</h2>
+      <div class="header-bar">
+        <h2>3. LISTA FINAL DE LA SALIDA <span style="font-size:12px;font-weight:400;color:#888;">(montos por salida)</span></h2>
+      </div>
+      <div id="salidaVacante" class="alert alert-info" style="display:none;">Agrega prendas con el botón "+ Agregar" para armar la salida.</div>
       <div class="table-wrap">
         <table>
           <thead><tr>
-            <th>Fecha</th><th>Producto</th><th>Cant.</th><th>Total venta</th><th>Insumos usados</th>
+            <th>Producto y talla</th><th>Cant.</th><th>Precio real compra</th><th>Precio insumos usados</th><th>Total</th><th>Quitar</th>
+          </tr></thead>
+          <tbody id="tablaSalidaLista"></tbody>
+        </table>
+      </div>
+      <div style="margin-top:14px;padding:14px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;">
+        <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;font-size:14px;">
+          <div><strong>TOTAL DE LA LISTA:</strong> <span id="salidaTotal" style="font-size:18px;">$0.00</span></div>
+          <div><strong>Para reponer (+ 50%):</strong> <span id="salidaReponer" style="font-size:18px;color:#059669;">$0.00</span></div>
+        </div>
+        <div style="margin-top:12px;">
+          <button class="btn btn-primary" onclick="confirmarSalida()">✔ Registrar salida (descontar stock)</button>
+          <button class="btn btn-sm" style="background:#e5e7eb;" onclick="vaciarSalida()">Vaciar lista</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Historial de salidas</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>Fecha</th><th>Producto</th><th>Cant.</th><th>Total</th><th>Reponer +50%</th><th>Insumos usados</th>
           </tr></thead>
           <tbody id="tablaPedidos"></tbody>
         </table>
@@ -360,10 +395,10 @@ let lastSyncAt = 0;
 let syncing = false;
 
 const DEFAULT_SUPPLIES = [
-  { name: 'Etiqueta', stock: 50, minStock: 10 },
-  { name: 'Bolsa', stock: 50, minStock: 10 },
-  { name: 'Tarjeta de presentación', stock: 50, minStock: 10 },
-  { name: 'Bolsa de empaque', stock: 50, minStock: 10 }
+  { name: 'Etiqueta', stock: 50, minStock: 10, price: 0.10 },
+  { name: 'Bolsa', stock: 50, minStock: 10, price: 0.05 },
+  { name: 'Tarjeta de presentación', stock: 50, minStock: 10, price: 0.20 },
+  { name: 'Bolsa de empaque', stock: 50, minStock: 10, price: 0.15 }
 ];
 
 function updateStatusBar(text, cls) {
@@ -665,6 +700,7 @@ function renderInsumos() {
     const bajo = (s.stock||0) < (s.minStock||0);
     html += `<tr>
       <td><strong>${esc(s.name)}</strong></td>
+      <td>$${(s.price||0).toFixed(2)}</td>
       <td>${s.stock||0}</td>
       <td>${s.minStock||0}</td>
       <td>${bajo ? '<span class="badge badge-danger">¡Reponer!</span>' : '<span class="badge badge-success">OK</span>'}</td>
@@ -686,37 +722,224 @@ function renderInsumos() {
 }
 
 function renderPedidoForm() {
-  const select = document.getElementById('pedidoProducto');
-  select.innerHTML = '<option value="">Seleccionar...</option>';
-  for (const p of data.products) {
-    select.innerHTML += `<option value="${esc(p.code)}">${esc(p.code)} - ${esc(p.desc||'')} (Stock: ${p.stock||0})</option>`;
-  }
+  renderSalidaSelect();
+  // Checkboxes de insumos
   const list = document.getElementById('pedidoInsumosList');
   list.innerHTML = '';
   for (const s of data.supplies) {
     const div = document.createElement('div');
     div.className = 'pedido-insumo-item';
-    div.innerHTML = `<input type="checkbox" id="ins_${esc(s.name)}" checked>
-      <label for="ins_${esc(s.name)}">${esc(s.name)} (${s.stock||0})</label>`;
+    div.innerHTML = `<input type="checkbox" id="ins_${esc(s.name)}" checked onchange="actualizarCostoInsumos()">
+      <label for="ins_${esc(s.name)}">${esc(s.name)} <strong>$${(s.price||0).toFixed(2)}</strong> (${s.stock||0})</label>`;
     list.appendChild(div);
   }
+  updateCostoInsumos();
+}
+
+// ===== LOGICA DE SALIDAS =====
+let salidaActual = []; // items de la salida
+let salidaSeleccion = null; // código seleccionado
+
+function renderSalidaSelect() {
+  const select = document.getElementById('pedidoProducto');
+  const q = (document.getElementById('salidaBuscar').value || '').toLowerCase();
+  let items = data.products;
+  if (q) items = items.filter(p =>
+    p.code.toLowerCase().includes(q) ||
+    (p.desc||'').toLowerCase().includes(q) ||
+    (p.color||'').toLowerCase().includes(q) ||
+    (p.talla||'').toLowerCase().includes(q)
+  );
+  select.innerHTML = '<option value="">Seleccionar...</option>';
+  for (const p of items) {
+    select.innerHTML += `<option value="${esc(p.code)}">${esc(p.code)} - ${esc(p.desc||'')} ${esc(p.color||'')} T:${esc(p.talla||'-')} (Stock: ${p.stock||0})</option>`;
+  }
+  if (items.length > 0) select.value = '';
+  document.getElementById('prendaInfo').style.display = 'none';
+  salidaSeleccion = null;
+}
+
+function verInfoPrenda() {
+  const code = document.getElementById('pedidoProducto').value;
+  if (!code) { document.getElementById('prendaInfo').style.display = 'none'; salidaSeleccion = null; return; }
+  const p = data.products.find(x => x.code === code);
+  if (!p) return;
+  salidaSeleccion = p;
+  const info = document.getElementById('prendaInfo');
+  info.style.display = 'block';
+  info.innerHTML = `<strong>${esc(p.code)}</strong> - ${esc(p.desc)} | ${esc(p.color||'-')} | Talla: ${esc(p.talla||'-')}<br>
+    Precio real (compra): <strong>$${(p.purchasePrice||0).toFixed(2)}</strong> | Precio venta: $${(p.salePrice||0).toFixed(2)} | Stock: ${p.stock||0}`;
+}
+
+function updateCostoInsumos() {
+  let total = 0;
+  const checks = document.querySelectorAll('#pedidoInsumosList input[type="checkbox"]');
+  for (const cb of checks) {
+    if (cb.checked) {
+      const name = cb.id.replace('ins_', '');
+      const s = data.supplies.find(x => x.name === name);
+      if (s) total += (s.price || 0);
+    }
+  }
+  document.getElementById('insumosCosto').textContent = `Costo por prenda en insumos: $${total.toFixed(2)}`;
+  return total;
+}
+
+function agregarASalida() {
+  if (!salidaSeleccion) { alert('Selecciona una prenda primero'); return; }
+  const qty = parseInt(document.getElementById('pedidoCant').value) || 1;
+  if (qty < 1) { alert('Cantidad inválida'); return; }
+  const p = salidaSeleccion;
+  if ((p.stock||0) < qty) { alert(`Stock insuficiente: solo hay ${p.stock}`); return; }
+
+  const usados = [];
+  const checks = document.querySelectorAll('#pedidoInsumosList input[type="checkbox"]');
+  let costoIns = 0;
+  for (const cb of checks) {
+    if (cb.checked) {
+      const name = cb.id.replace('ins_', '');
+      const s = data.supplies.find(x => x.name === name);
+      if (s) { usados.push(name); costoIns += (s.price||0); }
+    }
+  }
+
+  const realCompra = (p.purchasePrice||0) * qty;
+  const costoInsumos = costoIns * qty;
+  salidaActual.push({
+    code: p.code,
+    desc: p.desc,
+    color: p.color||'',
+    talla: p.talla||'-',
+    qty,
+    realCompra,
+    insumos: usados,
+    costoInsumos,
+    total: realCompra + costoInsumos
+  });
+  renderSalidaLista();
+}
+
+function quitarDeSalida(idx) {
+  salidaActual.splice(idx, 1);
+  renderSalidaLista();
+}
+
+function renderSalidaLista() {
+  const tbody = document.getElementById('tablaSalidaLista');
+  const empty = document.getElementById('salidaVacante');
+  if (salidaActual.length === 0) {
+    tbody.innerHTML = '';
+    empty.style.display = 'block';
+    document.getElementById('salidaTotal').textContent = '$0.00';
+    document.getElementById('salidaReponer').textContent = '$0.00';
+    return;
+  }
+  empty.style.display = 'none';
+  let html = '';
+  let granTotal = 0;
+  salidaActual.forEach((it, i) => {
+    granTotal += it.total;
+    const prodTalla = `${esc(it.code)} - ${esc(it.desc)} ${it.color ? '(' + esc(it.color) + ')':''} — T.${esc(it.talla)}`;
+    html += `<tr>
+      <td>${prodTalla}</td>
+      <td>${it.qty}</td>
+      <td>$${it.realCompra.toFixed(2)}</td>
+      <td>$${it.costoInsumos.toFixed(2)} (${it.insumos.length>0?esc(it.insumos.join(', ')):'ninguno'})</td>
+      <td><strong>$${it.total.toFixed(2)}</strong></td>
+      <td><button class="btn btn-sm btn-danger" onclick="quitarDeSalida(${i})">✕</button></td>
+    </tr>`;
+  });
+  tbody.innerHTML = html;
+  document.getElementById('salidaTotal').textContent = '$' + granTotal.toFixed(2);
+  document.getElementById('salidaReponer').textContent = '$' + (granTotal * 1.5).toFixed(2) + ` (+50%: $${(granTotal*0.5).toFixed(2)})`;
+}
+
+function vaciarSalida() {
+  if (salidaActual.length === 0) return;
+  if (!confirm('¿Vaciar la lista de salida?')) return;
+  salidaActual = [];
+  renderSalidaLista();
+}
+
+function confirmarSalida() {
+  if (salidaActual.length === 0) { alert('La lista está vacía'); return; }
+
+  // Verificar stock productos y insumos
+  for (const a of salidaActual) {
+    const p = data.products.find(x => x.code === a.code);
+    if (!p) { alert(`La prenda ${a.code} ya no existe`); return; }
+    if ((p.stock||0) < a.qty) { alert(`Stock insuficiente de ${a.code}: solo hay ${p.stock}`); return; }
+  }
+  for (const a of salidaActual) {
+    for (const name of a.insumos) {
+      const s = data.supplies.find(x => x.name === name);
+      if (s && (s.stock||0) < a.qty) {
+        if (!confirm(`Poco stock de "${name}" (${s.stock}, necesitas ${a.qty}). ¿Continuar?`)) return;
+      }
+    }
+  }
+
+  // Descontar
+  const granTotal = salidaActual.reduce((acc, a) => acc + a.total, 0);
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('es-ES') + ' ' + now.toLocaleTimeString('es-ES', { hour:'2-digit', minute:'2-digit' });
+
+  for (const a of salidaActual) {
+    const p = data.products.find(x => x.code === a.code);
+    p.stock = (p.stock||0) - a.qty;
+    for (const name of a.insumos) {
+      const s = data.supplies.find(x => x.name === name);
+      if (s) s.stock = Math.max(0, (s.stock||0) - a.qty);
+    }
+    data.orders.push({
+      date: dateStr,
+      productCode: a.code,
+      productDesc: a.desc,
+      talla: a.talla,
+      color: a.color,
+      qty: a.qty,
+      totalSalida: a.total,
+      usedSupplies: a.insumos,
+      granTotal,
+      reponer: granTotal * 1.5
+    });
+  }
+
+  saveData();
+  salidaActual = [];
+  document.getElementById('pedidoCant').value = '1';
+  renderAll();
+  alert(`✅ Salida registrada. Total: $${granTotal.toFixed(2)} — Reponer: $${(granTotal*1.5).toFixed(2)}`);
 }
 
 function renderPedidos() {
   const tbody = document.getElementById('tablaPedidos');
-  const orders = [...data.orders].reverse();
+  // Agrupar por salida (misma fecha + granTotal)
+  const grupos = [];
+  for (const o of [...data.orders].reverse()) {
+    const key = o.date + '|' + (o.granTotal||0);
+    const g = grupos.find(x => x.key === key);
+    if (g) {
+      g.items.push(o);
+      g.total += o.totalSalida || 0;
+    } else {
+      grupos.push({ key, date: o.date, granTotal: o.granTotal || (o.totalSalida||0), total: o.totalSalida||0, items: [o] });
+    }
+  }
   let html = '';
-  for (const o of orders) {
-    const detalle = `${esc(o.productDesc)}${o.color ? ' (' + esc(o.color) + ')' : ''} — Talla ${esc(o.talla || '-')}`;
+  for (const g of grupos) {
+    const detalle = g.items.map(o => `${esc(o.productCode)} - ${esc(o.productDesc)}(${esc(o.color||'-')}) T.${esc(o.talla||'-')} x${o.qty}`).join('<br>');
+    const insumos = [...new Set(g.items.flatMap(o => o.usedSupplies||[]))].join(', ');
     html += `<tr>
-      <td>${esc(o.date)}</td>
-      <td>${esc(o.productCode)} - ${detalle}</td>
-      <td>${o.qty}</td>
-      <td>$${(o.totalSale||0).toFixed(2)}</td>
-      <td>${o.usedSupplies && o.usedSupplies.length > 0 ? esc(o.usedSupplies.join(', ')) : 'Ninguno'}</td>
+      <td>${esc(g.date)}</td>
+      <td>${detalle}</td>
+      <td>${g.items.reduce((a,o)=>a+o.qty,0)}</td>
+      <td>$${g.total.toFixed(2)}</td>
+      <td>$${(g.granTotal*1.5).toFixed(2)}</td>
+      <td>${insumos ? esc(insumos) : 'Ninguno'}</td>
     </tr>`;
   }
-  tbody.innerHTML = html || '<tr><td colspan="5" style="text-align:center;color:#999;">No hay pedidos</td></tr>';
+  tbody.innerHTML = html || '<tr><td colspan="6" style="text-align:center;color:#999;">No hay salidas registradas</td></tr>';
 }
 
 // ===== CRUD PRODUCTOS =====
@@ -816,14 +1039,16 @@ function cerrarModal() {
 // ===== CRUD INSUMOS =====
 function guardarInsumo() {
   const name = document.getElementById('insName').value.trim();
+  const price = parseFloat(document.getElementById('insPrice').value) || 0;
   const stock = parseInt(document.getElementById('insStock').value) || 0;
   const minStock = parseInt(document.getElementById('insMin').value) || 0;
   if (!name) { alert('Nombre obligatorio'); return; }
   const idx = data.supplies.findIndex(s => s.name.toLowerCase() === name.toLowerCase());
-  if (idx >= 0) data.supplies[idx] = { name, stock, minStock };
-  else data.supplies.push({ name, stock, minStock });
+  if (idx >= 0) data.supplies[idx] = { name, price, stock, minStock };
+  else data.supplies.push({ name, price, stock, minStock });
   saveData();
   document.getElementById('insName').value = '';
+  document.getElementById('insPrice').value = '';
   document.getElementById('insStock').value = '';
   document.getElementById('insMin').value = '';
   renderAll();
@@ -840,61 +1065,10 @@ function editarInsumo(name) {
   const s = data.supplies.find(x => x.name === name);
   if (!s) return;
   document.getElementById('insName').value = s.name;
+  document.getElementById('insPrice').value = s.price||0;
   document.getElementById('insStock').value = s.stock||0;
   document.getElementById('insMin').value = s.minStock||0;
   window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-// ===== PEDIDOS =====
-function registrarPedido() {
-  const code = document.getElementById('pedidoProducto').value;
-  const qty = parseInt(document.getElementById('pedidoCant').value) || 1;
-  if (!code) { alert('Selecciona un producto'); return; }
-  if (qty < 1) { alert('Cantidad inválida'); return; }
-
-  const product = data.products.find(p => p.code === code);
-  if (!product) { alert('Producto no encontrado'); return; }
-  if ((product.stock||0) < qty) { alert(`Stock insuficiente: solo hay ${product.stock}`); return; }
-
-  const usedSupplies = [];
-  const checks = document.querySelectorAll('#pedidoInsumosList input[type="checkbox"]');
-  for (const cb of checks) {
-    if (cb.checked) {
-      const insName = cb.id.replace('ins_', '');
-      const supply = data.supplies.find(s => s.name === insName);
-      if (supply && (supply.stock||0) < qty) {
-        if (!confirm(`Poco stock de "${insName}" (${supply.stock}, necesitas ${qty}). ¿Continuar?`)) return;
-      }
-    }
-  }
-
-  product.stock = (product.stock||0) - qty;
-  for (const cb of checks) {
-    if (cb.checked) {
-      const insName = cb.id.replace('ins_', '');
-      const supply = data.supplies.find(s => s.name === insName);
-      if (supply) {
-        const used = Math.min(qty, supply.stock||0);
-        supply.stock = (supply.stock||0) - used;
-        usedSupplies.push(`${insName} x${used}`);
-      }
-    }
-  }
-
-  const now = new Date();
-  const dateStr = now.toLocaleDateString('es-ES') + ' ' + now.toLocaleTimeString('es-ES', { hour:'2-digit', minute:'2-digit' });
-  data.orders.push({
-    date: dateStr,
-    productCode: product.code,
-    productDesc: product.desc,
-    talla: product.talla || '-',
-    color: product.color || '',
-    qty, totalSale: product.salePrice * qty, usedSupplies
-  });
-  saveData();
-  document.getElementById('pedidoCant').value = '1';
-  renderAll();
-  alert(`✅ Pedido: ${qty}x ${product.code}`);
 }
 
 // ===== EXPORT / IMPORT =====
