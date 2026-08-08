@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Kaze">
+<meta name="format-detection" content="telephone=no">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%231a1a2e'/%3E%3Ctext x='50' y='64' font-size='42' font-family='Arial' font-weight='bold' fill='white' text-anchor='middle'%3EK%3C/text%3E%3C/svg%3E">
+<link rel="manifest" href='data:application/manifest+json,{"name":"Kaze Inventario","short_name":"Kaze","start_url":".","display":"standalone","background_color":"#f0f2f5","theme_color":"#1a1a2e"}'>
+<title>Kaze - Sistema de Inventario</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html { -webkit-text-size-adjust: 100%; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f0f2f5; color: #333; padding: 20px; padding-left: max(20px, env(safe-area-inset-left)); padding-right: max(20px, env(safe-area-inset-right)); padding-top: max(20px, env(safe-area-inset-top)); padding-bottom: max(20px, env(safe-area-inset-bottom)); }
+.container { max-width: 1200px; margin: 0 auto; }
+input, select, textarea { -webkit-appearance: none; appearance: none; border-radius: 8px; }
+input[type="checkbox"] { -webkit-appearance: checkbox; appearance: checkbox; }
+input[type="number"] { -webkit-appearance: none; appearance: none; }
+.btn { touch-action: manipulation; }
+
+#statusBar { display: flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 8px; margin-bottom: 16px; font-size: 13px; font-weight: 600; }
+.status-local { background: #fef3c7; color: #92400e; }
+.status-cloud { background: #dbeafe; color: #1e40af; }
+.status-error { background: #fee2e2; color: #991b1b; }
+.dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.dot-yellow { background: #f59e0b; }
+.dot-blue { background: #3b82f6; }
+.dot-red { background: #ef4444; }
+
+.tabs { display: flex; gap: 4px; margin-bottom: 20px; background: #fff; border-radius: 12px; padding: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); flex-wrap: wrap; }
+.tab-btn { flex: 1; padding: 12px 16px; border: none; background: transparent; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; color: #666; transition: all .2s; min-width: 80px; }
+.tab-btn:hover { background: #f5f5f5; }
+.tab-btn.active { background: #1a1a2e; color: #fff; }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+.card { background: #fff; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+.card h2 { margin-bottom: 16px; font-size: 17px; color: #1a1a2e; }
+
+.form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
+.form-group { display: flex; flex-direction: column; gap: 3px; }
+.form-group label { font-size: 12px; font-weight: 600; color: #555; }
+.form-group input, .form-group select { padding: 9px 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; outline: none; transition: border .2s; background: #fff; }
+.form-group select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath d='M7 10l5 5 5-5' stroke='%23555' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 28px; }
+.form-group input:focus, .form-group select:focus { border-color: #1a1a2e; }
+
+.btn { padding: 9px 18px; border: none; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; transition: all .2s; }
+.btn-primary { background: #1a1a2e; color: #fff; }
+.btn-primary:hover { background: #2d2d4a; }
+.btn-success { background: #059669; color: #fff; }
+.btn-success:hover { background: #047857; }
+.btn-danger { background: #dc2626; color: #fff; }
+.btn-danger:hover { background: #b91c1c; }
+.btn-sm { padding: 5px 10px; font-size: 12px; }
+.form-actions { margin-top: 14px; display: flex; gap: 8px; flex-wrap: wrap; }
+
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid #eee; }
+th { background: #f8f9fa; font-weight: 600; color: #555; font-size: 12px; white-space: nowrap; }
+tr:hover { background: #f8f9fa; }
+
+.alert { padding: 10px 14px; border-radius: 8px; margin-bottom: 10px; font-size: 13px; display: flex; align-items: center; gap: 8px; }
+.alert-warning { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
+.alert-info { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
+.alert-success { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+
+.badge { display: inline-block; padding: 2px 7px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+.badge-danger { background: #fef2f2; color: #dc2626; }
+.badge-success { background: #f0fdf4; color: #059669; }
+
+.pedido-insumos { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; margin: 10px 0; }
+.pedido-insumo-item { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border: 1px solid #eee; border-radius: 8px; font-size: 13px; }
+.pedido-insumo-item input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; }
+.pedido-insumo-item label { cursor: pointer; }
+
+.search-box { padding: 8px 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; width: 100%; max-width: 260px; outline: none; }
+.search-box:focus { border-color: #1a1a2e; }
+
+.header-bar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; }
+.header-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.total-row { font-weight: 700; background: #f0fdf4 !important; }
+.total-row td { border-top: 2px solid #059669; }
+
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; justify-content: center; align-items: center; }
+.modal-overlay.active { display: flex; }
+.modal { background: #fff; border-radius: 12px; padding: 20px; width: 90%; max-width: 520px; max-height: 90vh; overflow-y: auto; }
+.modal h2 { margin-bottom: 14px; }
+
+#setupPanel { display: none; }
+#setupPanel.active { display: block; }
+.setup-field { margin-bottom: 12px; }
+.setup-field label { display: block; font-size: 12px; font-weight: 600; color: #555; margin-bottom: 3px; }
+.setup-field input { width: 100%; padding: 9px 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; outline: none; }
+.setup-field input:focus { border-color: #1a1a2e; }
+
+.otro-input { margin-top: 4px; }
+
+.step { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 8px; font-size: 13px; color: #555; }
+.step-num { background: #1a1a2e; color: #fff; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; }
+
+@media (max-width: 600px) {
+  body { padding: 10px; }
+  .tab-btn { font-size: 12px; padding: 10px; }
+  .btn { min-height: 44px; }
+  .form-grid { grid-template-columns: 1fr; }
+  .search-box { font-size: 16px; max-width: 100%; }
+  .pedido-insumo-item { font-size: 15px; padding: 12px 10px; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+    <h1 style="font-size:22px;color:#1a1a2e;">Kaze - Inventario</h1>
+    <button class="btn btn-sm" style="background:#e5e7eb;" onclick="toggleSetup()">⚙️ Conectar nube</button>
+  </div>
+
+  <div id="statusBar" class="status-local"><span class="dot dot-yellow"></span> 💻 Modo local — los datos solo están en este dispositivo</div>
+
+  <!-- Setup Panel -->
+  <div class="card" id="setupPanel">
+    <h2>Conectar al servidor (PostgreSQL)</h2>
+    <div style="margin-bottom:14px;padding:12px;background:#f8f9fa;border-radius:8px;">
+      <div class="step"><span class="step-num">1</span><span>El servidor debe estar corriendo con su base de datos PostgreSQL</span></div>
+      <div class="step"><span class="step-num">2</span><span>Escribe la dirección del servidor (ej: <code>http://localhost:3000</code> o el link de tu servidor en la nube)</span></div>
+      <div class="step"><span class="step-num">3</span><span>Dale a <strong>"Conectar"</strong>. Los datos se guardan y comparten desde PostgreSQL.</span></div>
+    </div>
+    <div class="setup-field">
+      <label>URL del servidor</label>
+      <input type="text" id="srvUrl" placeholder="http://localhost:3000">
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-primary" onclick="conectarServidor()">Conectar</button>
+      <button class="btn btn-sm" style="background:#e5e7eb;" onclick="desconectarServidor()">Desconectar (modo local)</button>
+    </div>
+    <div id="setupMessage" style="margin-top:10px;font-size:13px;"></div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="productos">Productos</button>
+    <button class="tab-btn" data-tab="disponibles">Disponibles</button>
+    <button class="tab-btn" data-tab="insumos">Insumos</button>
+    <button class="tab-btn" data-tab="pedidos">Pedidos</button>
+  </div>
+
+  <!-- TAB: Productos -->
+  <div class="tab-content active" id="tab-productos">
+    <div class="card">
+      <h2>Registrar / Editar producto</h2>
+      <div class="form-grid" id="productoForm">
+        <div class="form-group">
+          <label>Código</label>
+          <input type="text" id="prodCode" placeholder="Ej: P001">
+        </div>
+        <div class="form-group">
+          <label>Descripción</label>
+          <input type="text" id="prodDesc" placeholder="Ej: Camisa manga larga">
+        </div>
+        <div class="form-group">
+          <label>Color</label>
+          <select id="prodColor" onchange="toggleOtro('prodColor','prodColorOtro')">
+            <option value="">Seleccionar...</option>
+            <option>Negro</option><option>Blanco</option><option>Azul</option>
+            <option>Rojo</option><option>Amarillo</option><option>Verde</option>
+            <option>Rosa</option><option>Gris</option><option>Naranja</option>
+            <option>Morado</option><option>Beige</option><option>Militar</option>
+            <option value="__OTRO__">Otro (personalizado)</option>
+          </select>
+          <input type="text" id="prodColorOtro" class="otro-input" placeholder="Escribe el color..." style="display:none;">
+        </div>
+        <div class="form-group">
+          <label>Tipo de talla</label>
+          <select id="prodTallaType" onchange="actualizarTallas()">
+            <option value="letras">Letras (XS-XXL)</option>
+            <option value="numeros">Números (calzado/pantalón)</option>
+            <option value="unica">Única</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Talla</label>
+          <select id="prodTalla" onchange="toggleOtro('prodTalla','prodTallaOtro')"></select>
+          <input type="text" id="prodTallaOtro" class="otro-input" placeholder="Escribe la talla..." style="display:none;">
+        </div>
+        <div class="form-group">
+          <label>Precio de compra ($)</label>
+          <input type="number" id="prodCompra" placeholder="0.00" step="0.01" min="0">
+        </div>
+        <div class="form-group">
+          <label>Precio de venta ($)</label>
+          <input type="number" id="prodVenta" placeholder="0.00" step="0.01" min="0">
+        </div>
+        <div class="form-group">
+          <label>Cant. requerida (mín.)</label>
+          <input type="number" id="prodReq" placeholder="10" min="0">
+        </div>
+        <div class="form-group">
+          <label>Stock actual</label>
+          <input type="number" id="prodStock" placeholder="0" min="0">
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-primary" onclick="guardarProducto()">Guardar producto</button>
+        <button class="btn btn-sm" style="background:#e5e7eb;" onclick="limpiarFormProducto()">Limpiar</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="header-bar">
+        <h2>Productos registrados</h2>
+        <input type="text" class="search-box" id="searchProductos" placeholder="Buscar..." oninput="renderProductos()">
+      </div>
+      <div id="alertasProductos"></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>Código</th><th>Descripción</th><th>Color</th><th>Talla</th><th>Compra</th><th>Venta</th><th>Suma</th><th>Stock</th><th>Req.</th><th>Estado</th><th>Acciones</th>
+          </tr></thead>
+          <tbody id="tablaProductos"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: Disponibles -->
+  <div class="tab-content" id="tab-disponibles">
+    <div class="card">
+      <div class="header-bar">
+        <h2>Productos disponibles</h2>
+        <input type="text" class="search-box" id="searchDisponibles" placeholder="Buscar..." oninput="renderDisponibles()">
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>Código</th><th>Descripción</th><th>Color</th><th>Talla</th><th>Precio venta</th><th>Stock</th>
+          </tr></thead>
+          <tbody id="tablaDisponibles"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: Insumos -->
+  <div class="tab-content" id="tab-insumos">
+    <div class="card">
+      <h2>Agregar / Editar insumo</h2>
+      <div class="form-grid" style="grid-template-columns:1fr 1fr 1fr auto;">
+        <div class="form-group">
+          <label>Nombre</label>
+          <input type="text" id="insName" placeholder="Ej: Bolsa">
+        </div>
+        <div class="form-group">
+          <label>Stock actual</label>
+          <input type="number" id="insStock" placeholder="0" min="0">
+        </div>
+        <div class="form-group">
+          <label>Stock mínimo (alerta)</label>
+          <input type="number" id="insMin" placeholder="10" min="0">
+        </div>
+        <div class="form-actions" style="align-self:end;">
+          <button class="btn btn-primary" onclick="guardarInsumo()">Guardar</button>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Inventario de insumos</h2>
+      <div id="alertasInsumos"></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>Insumo</th><th>Stock</th><th>Mínimo</th><th>Estado</th><th>Acciones</th>
+          </tr></thead>
+          <tbody id="tablaInsumos"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: Pedidos -->
+  <div class="tab-content" id="tab-pedidos">
+    <div class="card">
+      <h2>Registrar pedido</h2>
+      <div class="form-grid" style="grid-template-columns:1fr 1fr 1fr;">
+        <div class="form-group">
+          <label>Producto</label>
+          <select id="pedidoProducto" style="padding:9px 10px;border:1px solid #ddd;border-radius:8px;font-size:13px;"></select>
+        </div>
+        <div class="form-group">
+          <label>Cantidad</label>
+          <input type="number" id="pedidoCant" placeholder="1" min="1" value="1">
+        </div>
+        <div class="form-group" style="align-self:end;">
+          <button class="btn btn-success" onclick="registrarPedido()">Registrar pedido</button>
+        </div>
+      </div>
+      <div style="margin-top:10px;">
+        <label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:6px;">Insumos a descontar (desmarca los que no uses):</label>
+        <div class="pedido-insumos" id="pedidoInsumosList"></div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Historial de pedidos</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>Fecha</th><th>Producto</th><th>Cant.</th><th>Total venta</th><th>Insumos usados</th>
+          </tr></thead>
+          <tbody id="tablaPedidos"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom bar -->
+  <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:16px;padding:12px 0;border-top:1px solid #ddd;">
+    <button class="btn btn-sm" style="background:#e5e7eb;" onclick="exportarJSON()">Exportar JSON</button>
+    <button class="btn btn-sm" style="background:#e5e7eb;" onclick="document.getElementById('importFile').click()">Importar JSON</button>
+    <input type="file" id="importFile" accept=".json" style="display:none" onchange="importarJSON(event)">
+    <button class="btn btn-sm btn-danger" onclick="if(confirm('¿Borrar todos los datos?')){resetData();}">Reiniciar</button>
+  </div>
+</div>
+
+<!-- Modal editar producto -->
+<div class="modal-overlay" id="modalEditar">
+  <div class="modal">
+    <h2>Editar producto</h2>
+    <div class="form-grid" id="editarForm">
+      <div class="form-group"><label>Código</label><input type="text" id="editCode"></div>
+      <div class="form-group"><label>Descripción</label><input type="text" id="editDesc"></div>
+      <div class="form-group">
+        <label>Color</label>
+        <select id="editColor" onchange="toggleOtro('editColor','editColorOtro')">
+          <option value="">Seleccionar...</option>
+          <option>Negro</option><option>Blanco</option><option>Azul</option>
+          <option>Rojo</option><option>Amarillo</option><option>Verde</option>
+          <option>Rosa</option><option>Gris</option><option>Naranja</option>
+          <option>Morado</option><option>Beige</option><option>Militar</option>
+          <option value="__OTRO__">Otro (personalizado)</option>
+        </select>
+        <input type="text" id="editColorOtro" class="otro-input" placeholder="Color..." style="display:none;">
+      </div>
+      <div class="form-group">
+        <label>Tipo de talla</label>
+        <select id="editTallaType" onchange="actualizarEditTallas()">
+          <option value="letras">Letras (XS-XXL)</option>
+          <option value="numeros">Números (calzado/pantalón)</option>
+          <option value="unica">Única</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Talla</label>
+        <select id="editTalla" onchange="toggleOtro('editTalla','editTallaOtro')"></select>
+        <input type="text" id="editTallaOtro" class="otro-input" placeholder="Talla..." style="display:none;">
+      </div>
+      <div class="form-group"><label>Precio compra</label><input type="number" id="editCompra" step="0.01" min="0"></div>
+      <div class="form-group"><label>Precio venta</label><input type="number" id="editVenta" step="0.01" min="0"></div>
+      <div class="form-group"><label>Cant. requerida</label><input type="number" id="editReq" min="0"></div>
+      <div class="form-group"><label>Stock actual</label><input type="number" id="editStock" min="0"></div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-primary" onclick="guardarEdicion()">Guardar</button>
+      <button class="btn btn-sm" style="background:#e5e7eb;" onclick="cerrarModal()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== SERVIDOR CONFIG =====
+let srvUrl = null;
+let useCloud = false;
+let syncTimer = null;
+let lastSyncAt = 0; // timestamp ISO de la última escritura que confirmamos
+let syncing = false;
+
+const DEFAULT_SUPPLIES = [
+  { name: 'Etiqueta', stock: 50, minStock: 10 },
+  { name: 'Bolsa', stock: 50, minStock: 10 },
+  { name: 'Tarjeta de presentación', stock: 50, minStock: 10 },
+  { name: 'Bolsa de empaque', stock: 50, minStock: 10 }
+];
+
+function apiURL(path) {
+  return (srvUrl || '') + path;
+}
+
+function loadCloudConfig() {
+  try {
+    const saved = localStorage.getItem('kaze_srv_config');
+    if (saved) {
+      const cfg = JSON.parse(saved);
+      srvUrl = cfg.url || '';
+      document.getElementById('srvUrl').value = srvUrl;
+      return true;
+    }
+  } catch(e) {}
+  return false;
+}
+
+function saveCloudConfig() {
+  localStorage.setItem('kaze_srv_config', JSON.stringify({ url: srvUrl }));
+}
+
+function toggleSetup() {
+  document.getElementById('setupPanel').classList.toggle('active');
+}
+
+function updateStatusBar(text, cls) {
+  const bar = document.getElementById('statusBar');
+  bar.className = cls || (useCloud ? 'status-cloud' : 'status-local');
+  if (text) bar.innerHTML = text;
+  else if (useCloud) bar.innerHTML = '<span class="dot dot-blue"></span> 🐘 Conectado a PostgreSQL — datos sincronizados entre dispositivos';
+  else bar.innerHTML = '<span class="dot dot-yellow"></span> 💻 Modo local — los datos solo están en este dispositivo';
+}
+
+// ===== SERVIDOR API =====
+async function srvRead() {
+  const res = await fetch(apiURL('/api/data'));
+  if (!res.ok) throw new Error('Error al leer (' + res.status + ')');
+  const json = await res.json();
+  return { data: json.data, updated_at: json.updated_at };
+}
+
+async function srvWrite(data) {
+  const res = await fetch(apiURL('/api/data'), {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+  if (!res.ok) throw new Error('Error al guardar (' + res.status + ')');
+  const json = await res.json();
+  return json.updated_at;
+}
+
+async function conectarServidor() {
+  const msg = document.getElementById('setupMessage');
+  srvUrl = document.getElementById('srvUrl').value.trim().replace(/\/+$/, '');
+  if (!srvUrl) { msg.innerHTML = '<span style="color:#dc2626;">Escribe la URL del servidor</span>'; return; }
+  msg.innerHTML = '<span style="color:#666;">Conectando...</span>';
+  try {
+    const remote = await srvRead();
+    saveCloudConfig();
+    useCloud = true;
+    msg.innerHTML = '';
+    document.getElementById('setupPanel').classList.remove('active');
+    // Si el servidor tiene datos, úsalos; si no, sube los locales
+    if (remote.data && remote.data.products) {
+      data = {
+        products: remote.data.products || [],
+        supplies: remote.data.supplies || DEFAULT_SUPPLIES,
+        orders: remote.data.orders || [],
+        updatedAt: remote.data.updatedAt || Date.now()
+      };
+      localStorage.setItem('kaze_inventario', JSON.stringify(data));
+      lastSyncAt = remote.updated_at ? new Date(remote.updated_at).getTime() : data.updatedAt;
+      renderAll();
+    } else {
+      data.updatedAt = Date.now();
+      saveData(true);
+    }
+    updateStatusBar();
+    iniciarSync();
+    alert('🐘 Conectado a PostgreSQL. Los datos se comparten entre dispositivos.');
+  } catch(err) {
+    useCloud = false;
+    msg.innerHTML = `<span style="color:#dc2626;">No se pudo conectar: ${err.message}. Verifica la URL del servidor.</span>`;
+  }
+}
+
+function desconectarServidor() {
+  useCloud = false;
+  stopSync();
+  localStorage.removeItem('kaze_srv_config');
+  document.getElementById('setupPanel').classList.remove('active');
+  updateStatusBar();
+}
+
+function iniciarSync() {
+  stopSync();
+  // Poll cada 10s por cambios remotos
+  syncTimer = setInterval(syncCheck, 10000);
+}
+
+function stopSync() {
+  if (syncTimer) { clearInterval(syncTimer); syncTimer = null; }
+}
+
+async function syncCheck() {
+  if (!useCloud || syncing) return;
+  syncing = true;
+  try {
+    const remote = await srvRead();
+    const remoteTime = remote.updated_at ? new Date(remote.updated_at).getTime() : 0;
+    if (remote.data && remoteTime > lastSyncAt) {
+      // El servidor tiene algo más nuevo - cargarlo
+      data = {
+        products: remote.data.products || [],
+        supplies: remote.data.supplies || DEFAULT_SUPPLIES,
+        orders: remote.data.orders || [],
+        updatedAt: remote.data.updatedAt || remoteTime
+      };
+      localStorage.setItem('kaze_inventario', JSON.stringify(data));
+      lastSyncAt = remoteTime;
+      renderAll();
+      const bar = document.getElementById('statusBar');
+      bar.innerHTML = '<span class="dot dot-blue"></span> 🐘 Sincronizado con PostgreSQL (actualizado)';
+      setTimeout(updateStatusBar, 3000);
+    }
+  } catch(e) {
+    updateStatusBar('<span class="dot dot-red"></span> ⚠️ Error de conexión con el servidor', 'status-error');
+    setTimeout(updateStatusBar, 5000);
+  }
+  syncing = false;
+}
+
+// ===== DATA =====
+let data = { products: [], supplies: [], orders: [] };
+let editingCode = null;
+
+function getDefaultData() {
+  return { products: [], supplies: JSON.parse(JSON.stringify(DEFAULT_SUPPLIES)), orders: [], updatedAt: Date.now() };
+}
+
+function loadData() {
+  try {
+    const saved = localStorage.getItem('kaze_inventario');
+    if (saved) {
+      data = JSON.parse(saved);
+      if (!data.supplies || data.supplies.length === 0) data.supplies = JSON.parse(JSON.stringify(DEFAULT_SUPPLIES));
+      lastSyncAt = data.updatedAt || 0;
+      return;
+    }
+  } catch(e) {}
+  data = getDefaultData();
+  saveData(true);
+}
+
+function saveData(force) {
+  data.updatedAt = Date.now();
+  localStorage.setItem('kaze_inventario', JSON.stringify(data));
+  if (useCloud) {
+    if (syncTimer) clearInterval(syncTimer); // pausa momentánea del polling
+    srvWrite(data).then((serverTime) => {
+      lastSyncAt = new Date(serverTime).getTime();
+      iniciarSync();
+    }).catch(() => {
+      iniciarSync();
+      updateStatusBar('<span class="dot dot-red"></span> ⚠️ No se pudo guardar en el servidor', 'status-error');
+      setTimeout(updateStatusBar, 5000);
+    });
+  }
+}
+
+function resetData() {
+  data = getDefaultData();
+  saveData(true);
+  renderAll();
+}
+
+// ===== SIZES =====
+const SIZE_OPTIONS = {
+  letras: ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'],
+  numeros: ['35', '36', '37', '38', '39', '40', '41', '42', '43', '44'],
+  unica: ['Única']
+};
+
+function actualizarTallas() {
+  const type = document.getElementById('prodTallaType').value;
+  const select = document.getElementById('prodTalla');
+  const vals = SIZE_OPTIONS[type] || SIZE_OPTIONS.letras;
+  select.innerHTML = '<option value="">Seleccionar...</option>'
+    + vals.map(v => `<option>${v}</option>`).join('')
+    + '<option value="__OTRO__">Otro (personalizado)</option>';
+  select.value = '';
+  document.getElementById('prodTallaOtro').style.display = 'none';
+}
+
+function actualizarEditTallas() {
+  const type = document.getElementById('editTallaType').value;
+  const select = document.getElementById('editTalla');
+  const vals = SIZE_OPTIONS[type] || SIZE_OPTIONS.letras;
+  select.innerHTML = '<option value="">Seleccionar...</option>'
+    + vals.map(v => `<option>${v}</option>`).join('')
+    + '<option value="__OTRO__">Otro (personalizado)</option>';
+  select.value = '';
+  document.getElementById('editTallaOtro').style.display = 'none';
+}
+
+function toggleOtro(selectId, inputId) {
+  const select = document.getElementById(selectId);
+  const input = document.getElementById(inputId);
+  input.style.display = select.value === '__OTRO__' ? 'block' : 'none';
+  if (select.value !== '__OTRO__') input.value = '';
+}
+
+function getValorCampo(selectId, inputId) {
+  const select = document.getElementById(selectId);
+  if (select.value === '__OTRO__') return document.getElementById(inputId).value.trim();
+  return select.value;
+}
+
+function setValorCampo(selectId, inputId, valor, opciones) {
+  const select = document.getElementById(selectId);
+  const input = document.getElementById(inputId);
+  if (!valor) { select.value = ''; input.style.display = 'none'; return; }
+  if (opciones.includes(valor)) {
+    select.value = valor;
+    input.style.display = 'none';
+  } else {
+    select.value = '__OTRO__';
+    input.value = valor;
+    input.style.display = 'block';
+  }
+}
+
+// ===== RENDER =====
+function renderAll() {
+  renderProductos();
+  renderDisponibles();
+  renderInsumos();
+  renderPedidos();
+  renderPedidoForm();
+}
+
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function renderProductos() {
+  const tbody = document.getElementById('tablaProductos');
+  const q = document.getElementById('searchProductos').value.toLowerCase();
+  let items = data.products;
+  if (q) items = items.filter(p =>
+    p.code.toLowerCase().includes(q) ||
+    (p.desc||'').toLowerCase().includes(q) ||
+    (p.color||'').toLowerCase().includes(q)
+  );
+
+  let html = '';
+  let totalCompra = 0, totalVenta = 0;
+  for (const p of items) {
+    const suma = (p.purchasePrice||0) + (p.salePrice||0);
+    totalCompra += (p.purchasePrice||0);
+    totalVenta += (p.salePrice||0);
+    const bajo = (p.stock||0) < (p.requiredQty||0);
+    html += `<tr>
+      <td><strong>${esc(p.code)}</strong></td>
+      <td>${esc(p.desc||'')}</td>
+      <td>${esc(p.color||'-')}</td>
+      <td>${esc(p.talla||'-')}</td>
+      <td>$${(p.purchasePrice||0).toFixed(2)}</td>
+      <td>$${(p.salePrice||0).toFixed(2)}</td>
+      <td><strong>$${suma.toFixed(2)}</strong></td>
+      <td>${p.stock||0}</td>
+      <td>${p.requiredQty||0}</td>
+      <td>${bajo ? '<span class="badge badge-danger">¡Reponer!</span>' : '<span class="badge badge-success">OK</span>'}</td>
+      <td>
+        <button class="btn btn-sm btn-primary" onclick="editarProducto('${esc(p.code)}')">Editar</button>
+        <button class="btn btn-sm btn-danger" onclick="eliminarProducto('${esc(p.code)}')">Eliminar</button>
+      </td>
+    </tr>`;
+  }
+  const totSuma = totalCompra + totalVenta;
+  html += `<tr class="total-row">
+    <td colspan="4"><strong>TOTALES</strong></td>
+    <td><strong>$${totalCompra.toFixed(2)}</strong></td>
+    <td><strong>$${totalVenta.toFixed(2)}</strong></td>
+    <td><strong>$${totSuma.toFixed(2)}</strong></td>
+    <td colspan="4"></td>
+  </tr>`;
+  tbody.innerHTML = html;
+
+  const alertDiv = document.getElementById('alertasProductos');
+  const bajos = data.products.filter(p => (p.stock||0) < (p.requiredQty||0));
+  if (bajos.length > 0) {
+    alertDiv.innerHTML = `<div class="alert alert-warning">⚠️ ${bajos.length} producto(s) necesitan reposición</div>`;
+  } else {
+    alertDiv.innerHTML = '<div class="alert alert-success">✅ Todos los productos tienen stock suficiente</div>';
+  }
+}
+
+function renderDisponibles() {
+  const tbody = document.getElementById('tablaDisponibles');
+  const q = document.getElementById('searchDisponibles').value.toLowerCase();
+  let items = data.products.filter(p => (p.stock||0) > 0);
+  if (q) items = items.filter(p =>
+    p.code.toLowerCase().includes(q) ||
+    (p.desc||'').toLowerCase().includes(q) ||
+    (p.color||'').toLowerCase().includes(q)
+  );
+  let html = '';
+  for (const p of items) {
+    html += `<tr>
+      <td><strong>${esc(p.code)}</strong></td>
+      <td>${esc(p.desc||'')}</td>
+      <td>${esc(p.color||'-')}</td>
+      <td>${esc(p.talla||'-')}</td>
+      <td>$${(p.salePrice||0).toFixed(2)}</td>
+      <td>${p.stock||0}</td>
+    </tr>`;
+  }
+  tbody.innerHTML = html || '<tr><td colspan="6" style="text-align:center;color:#999;">No hay productos con stock</td></tr>';
+}
+
+function renderInsumos() {
+  const tbody = document.getElementById('tablaInsumos');
+  let html = '';
+  for (const s of data.supplies) {
+    const bajo = (s.stock||0) < (s.minStock||0);
+    html += `<tr>
+      <td><strong>${esc(s.name)}</strong></td>
+      <td>${s.stock||0}</td>
+      <td>${s.minStock||0}</td>
+      <td>${bajo ? '<span class="badge badge-danger">¡Reponer!</span>' : '<span class="badge badge-success">OK</span>'}</td>
+      <td>
+        <button class="btn btn-sm btn-primary" onclick="editarInsumo('${esc(s.name)}')">Editar</button>
+        <button class="btn btn-sm btn-danger" onclick="eliminarInsumo('${esc(s.name)}')">Eliminar</button>
+      </td>
+    </tr>`;
+  }
+  tbody.innerHTML = html;
+
+  const alertDiv = document.getElementById('alertasInsumos');
+  const bajos = data.supplies.filter(s => (s.stock||0) < (s.minStock||0));
+  if (bajos.length > 0) {
+    alertDiv.innerHTML = `<div class="alert alert-warning">⚠️ ${bajos.length} insumo(s) necesitan reposición</div>`;
+  } else {
+    alertDiv.innerHTML = '<div class="alert alert-success">✅ Todos los insumos tienen stock suficiente</div>';
+  }
+}
+
+function renderPedidoForm() {
+  const select = document.getElementById('pedidoProducto');
+  select.innerHTML = '<option value="">Seleccionar...</option>';
+  for (const p of data.products) {
+    select.innerHTML += `<option value="${esc(p.code)}">${esc(p.code)} - ${esc(p.desc||'')} (Stock: ${p.stock||0})</option>`;
+  }
+  const list = document.getElementById('pedidoInsumosList');
+  list.innerHTML = '';
+  for (const s of data.supplies) {
+    const div = document.createElement('div');
+    div.className = 'pedido-insumo-item';
+    div.innerHTML = `<input type="checkbox" id="ins_${esc(s.name)}" checked>
+      <label for="ins_${esc(s.name)}">${esc(s.name)} (${s.stock||0})</label>`;
+    list.appendChild(div);
+  }
+}
+
+function renderPedidos() {
+  const tbody = document.getElementById('tablaPedidos');
+  const orders = [...data.orders].reverse();
+  let html = '';
+  for (const o of orders) {
+    const detalle = `${esc(o.productDesc)}${o.color ? ' (' + esc(o.color) + ')' : ''} — Talla ${esc(o.talla || '-')}`;
+    html += `<tr>
+      <td>${esc(o.date)}</td>
+      <td>${esc(o.productCode)} - ${detalle}</td>
+      <td>${o.qty}</td>
+      <td>$${(o.totalSale||0).toFixed(2)}</td>
+      <td>${o.usedSupplies && o.usedSupplies.length > 0 ? esc(o.usedSupplies.join(', ')) : 'Ninguno'}</td>
+    </tr>`;
+  }
+  tbody.innerHTML = html || '<tr><td colspan="5" style="text-align:center;color:#999;">No hay pedidos</td></tr>';
+}
+
+// ===== CRUD PRODUCTOS =====
+function guardarProducto() {
+  const code = document.getElementById('prodCode').value.trim();
+  const desc = document.getElementById('prodDesc').value.trim();
+  const color = getValorCampo('prodColor', 'prodColorOtro');
+  const talla = getValorCampo('prodTalla', 'prodTallaOtro');
+  const tallaType = document.getElementById('prodTallaType').value;
+  const purchasePrice = parseFloat(document.getElementById('prodCompra').value) || 0;
+  const salePrice = parseFloat(document.getElementById('prodVenta').value) || 0;
+  const requiredQty = parseInt(document.getElementById('prodReq').value) || 0;
+  const stock = parseInt(document.getElementById('prodStock').value) || 0;
+
+  if (!code) { alert('El código es obligatorio'); return; }
+  if (!desc) { alert('La descripción es obligatoria'); return; }
+
+  const idx = data.products.findIndex(p => p.code === code);
+  const prod = { code, desc, color, talla, tallaType, purchasePrice, salePrice, requiredQty, stock };
+  if (idx >= 0) data.products[idx] = prod;
+  else data.products.push(prod);
+
+  saveData();
+  limpiarFormProducto();
+  renderAll();
+  alert('Producto guardado');
+}
+
+function limpiarFormProducto() {
+  document.getElementById('prodCode').value = '';
+  document.getElementById('prodDesc').value = '';
+  document.getElementById('prodColor').value = '';
+  document.getElementById('prodColorOtro').style.display = 'none';
+  document.getElementById('prodColorOtro').value = '';
+  document.getElementById('prodTalla').value = '';
+  document.getElementById('prodTallaOtro').style.display = 'none';
+  document.getElementById('prodTallaOtro').value = '';
+  document.getElementById('prodCompra').value = '';
+  document.getElementById('prodVenta').value = '';
+  document.getElementById('prodReq').value = '';
+  document.getElementById('prodStock').value = '';
+}
+
+function eliminarProducto(code) {
+  if (!confirm(`¿Eliminar "${code}"?`)) return;
+  data.products = data.products.filter(p => p.code !== code);
+  saveData();
+  renderAll();
+}
+
+function editarProducto(code) {
+  const p = data.products.find(x => x.code === code);
+  if (!p) return;
+  editingCode = code;
+  document.getElementById('editCode').value = p.code;
+  document.getElementById('editDesc').value = p.desc||'';
+  setValorCampo('editColor', 'editColorOtro', p.color, ['Negro','Blanco','Azul','Rojo','Amarillo','Verde','Rosa','Gris','Naranja','Morado','Beige','Militar']);
+  document.getElementById('editTallaType').value = p.tallaType || 'letras';
+  actualizarEditTallas();
+  setValorCampo('editTalla', 'editTallaOtro', p.talla, SIZE_OPTIONS[p.tallaType||'letras']);
+  document.getElementById('editCompra').value = p.purchasePrice||0;
+  document.getElementById('editVenta').value = p.salePrice||0;
+  document.getElementById('editReq').value = p.requiredQty||0;
+  document.getElementById('editStock').value = p.stock||0;
+  document.getElementById('modalEditar').classList.add('active');
+}
+
+function guardarEdicion() {
+  const code = document.getElementById('editCode').value.trim();
+  const desc = document.getElementById('editDesc').value.trim();
+  const color = getValorCampo('editColor', 'editColorOtro');
+  const talla = getValorCampo('editTalla', 'editTallaOtro');
+  const tallaType = document.getElementById('editTallaType').value;
+  const purchasePrice = parseFloat(document.getElementById('editCompra').value) || 0;
+  const salePrice = parseFloat(document.getElementById('editVenta').value) || 0;
+  const requiredQty = parseInt(document.getElementById('editReq').value) || 0;
+  const stock = parseInt(document.getElementById('editStock').value) || 0;
+
+  if (!code || !desc) { alert('Código y descripción obligatorios'); return; }
+
+  if (code !== editingCode) {
+    data.products = data.products.filter(p => p.code !== editingCode);
+  } else {
+    data.products = data.products.filter(p => p.code !== code);
+  }
+  data.products.push({ code, desc, color, talla, tallaType, purchasePrice, salePrice, requiredQty, stock });
+  saveData();
+  cerrarModal();
+  renderAll();
+}
+
+function cerrarModal() {
+  document.getElementById('modalEditar').classList.remove('active');
+  editingCode = null;
+}
+
+// ===== CRUD INSUMOS =====
+function guardarInsumo() {
+  const name = document.getElementById('insName').value.trim();
+  const stock = parseInt(document.getElementById('insStock').value) || 0;
+  const minStock = parseInt(document.getElementById('insMin').value) || 0;
+  if (!name) { alert('Nombre obligatorio'); return; }
+  const idx = data.supplies.findIndex(s => s.name.toLowerCase() === name.toLowerCase());
+  if (idx >= 0) data.supplies[idx] = { name, stock, minStock };
+  else data.supplies.push({ name, stock, minStock });
+  saveData();
+  document.getElementById('insName').value = '';
+  document.getElementById('insStock').value = '';
+  document.getElementById('insMin').value = '';
+  renderAll();
+}
+
+function eliminarInsumo(name) {
+  if (!confirm(`¿Eliminar "${name}"?`)) return;
+  data.supplies = data.supplies.filter(s => s.name !== name);
+  saveData();
+  renderAll();
+}
+
+function editarInsumo(name) {
+  const s = data.supplies.find(x => x.name === name);
+  if (!s) return;
+  document.getElementById('insName').value = s.name;
+  document.getElementById('insStock').value = s.stock||0;
+  document.getElementById('insMin').value = s.minStock||0;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ===== PEDIDOS =====
+function registrarPedido() {
+  const code = document.getElementById('pedidoProducto').value;
+  const qty = parseInt(document.getElementById('pedidoCant').value) || 1;
+  if (!code) { alert('Selecciona un producto'); return; }
+  if (qty < 1) { alert('Cantidad inválida'); return; }
+
+  const product = data.products.find(p => p.code === code);
+  if (!product) { alert('Producto no encontrado'); return; }
+  if ((product.stock||0) < qty) { alert(`Stock insuficiente: solo hay ${product.stock}`); return; }
+
+  const usedSupplies = [];
+  const checks = document.querySelectorAll('#pedidoInsumosList input[type="checkbox"]');
+  for (const cb of checks) {
+    if (cb.checked) {
+      const insName = cb.id.replace('ins_', '');
+      const supply = data.supplies.find(s => s.name === insName);
+      if (supply && (supply.stock||0) < qty) {
+        if (!confirm(`Poco stock de "${insName}" (${supply.stock}, necesitas ${qty}). ¿Continuar?`)) return;
+      }
+    }
+  }
+
+  product.stock = (product.stock||0) - qty;
+  for (const cb of checks) {
+    if (cb.checked) {
+      const insName = cb.id.replace('ins_', '');
+      const supply = data.supplies.find(s => s.name === insName);
+      if (supply) {
+        const used = Math.min(qty, supply.stock||0);
+        supply.stock = (supply.stock||0) - used;
+        usedSupplies.push(`${insName} x${used}`);
+      }
+    }
+  }
+
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('es-ES') + ' ' + now.toLocaleTimeString('es-ES', { hour:'2-digit', minute:'2-digit' });
+  data.orders.push({
+    date: dateStr,
+    productCode: product.code,
+    productDesc: product.desc,
+    talla: product.talla || '-',
+    color: product.color || '',
+    qty, totalSale: product.salePrice * qty, usedSupplies
+  });
+  saveData();
+  document.getElementById('pedidoCant').value = '1';
+  renderAll();
+  alert(`✅ Pedido: ${qty}x ${product.code}`);
+}
+
+// ===== EXPORT / IMPORT =====
+function exportarJSON() {
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'inventario_kaze.json';
+  a.click();
+}
+
+function importarJSON(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const imported = JSON.parse(e.target.result);
+      if (imported.products && imported.supplies !== undefined && imported.orders) {
+        if (confirm('¿Importar? Se reemplazarán los datos actuales.')) {
+          data = imported;
+          saveData(true);
+          renderAll();
+          alert('Importado correctamente');
+        }
+      } else {
+        alert('Formato JSON inválido');
+      }
+    } catch(err) { alert('Error: ' + err.message); }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+// ===== TABS =====
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+  });
+});
+
+// ===== INIT =====
+actualizarTallas();
+actualizarEditTallas();
+loadData();
+if (loadCloudConfig()) {
+  conectarServidor().then(() => {
+    if (useCloud) updateStatusBar();
+  });
+}
+renderAll();
+</script>
+</body>
+</html>
