@@ -86,6 +86,12 @@ tr:hover { background: #f8f9fa; }
 .total-row { font-weight: 700; background: #f0fdf4 !important; }
 .total-row td { border-top: 2px solid #059669; }
 
+.sumatoria-repos { margin-top: 14px; padding: 14px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; display: flex; flex-direction: column; gap: 8px; }
+.suma-item { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-size: 14px; flex-wrap: wrap; }
+.suma-item strong { font-size: 18px; color: #059669; }
+.suma-rojo strong { color: #dc2626; }
+.suma-note { font-size: 12px; color: #666; justify-content: flex-start; }
+
 .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; justify-content: center; align-items: center; }
 .modal-overlay.active { display: flex; }
 .modal { background: #fff; border-radius: 12px; padding: 20px; width: 90%; max-width: 520px; max-height: 90vh; overflow-y: auto; }
@@ -168,8 +174,13 @@ tr:hover { background: #f8f9fa; }
           <input type="text" id="prodTallaOtro" class="otro-input" placeholder="Escribe la talla..." style="display:none;">
         </div>
         <div class="form-group">
-          <label>Precio de compra ($)</label>
+          <label>Precio de compra base ($)</label>
           <input type="number" id="prodCompra" placeholder="0.00" step="0.01" min="0">
+        </div>
+        <div class="form-group">
+          <label>% de reposición</label>
+          <input type="number" id="prodRep" placeholder="50" step="1" min="0">
+          <small style="color:#999;">% extra sobre el costo base (ej. 80 = comprar 1.8x)</small>
         </div>
         <div class="form-group">
           <label>Precio de venta ($)</label>
@@ -199,11 +210,12 @@ tr:hover { background: #f8f9fa; }
       <div class="table-wrap">
         <table>
           <thead><tr>
-            <th>Código</th><th>Descripción</th><th>Color</th><th>Talla</th><th>Compra</th><th>Venta</th><th>Suma</th><th>Stock</th><th>Req.</th><th>Estado</th><th>Acciones</th>
+            <th>Código</th><th>Descripción</th><th>Color</th><th>Talla</th><th>Compra base</th><th>% Rep.</th><th>Precio real repos.</th><th>Venta</th><th>Stock</th><th>Req.</th><th>Estado</th><th>Acciones</th>
           </tr></thead>
           <tbody id="tablaProductos"></tbody>
         </table>
       </div>
+      <div id="sumatoriaRepos" class="sumatoria-repos"></div>
     </div>
   </div>
 
@@ -235,8 +247,13 @@ tr:hover { background: #f8f9fa; }
           <input type="text" id="insName" placeholder="Ej: Bolsa">
         </div>
         <div class="form-group">
-          <label>Precio del insumo ($)</label>
+          <label>Precio del insumo base ($)</label>
           <input type="number" id="insPrice" placeholder="0.00" step="0.01" min="0">
+        </div>
+        <div class="form-group">
+          <label>% de reposición</label>
+          <input type="number" id="insRep" placeholder="50" step="1" min="0">
+          <small style="color:#999;">% extra sobre el precio base (ej. 50 = 1.5x)</small>
         </div>
         <div class="form-group">
           <label>Stock actual</label>
@@ -257,7 +274,7 @@ tr:hover { background: #f8f9fa; }
       <div class="table-wrap">
         <table>
           <thead><tr>
-            <th>Insumo</th><th>Precio</th><th>Stock</th><th>Mínimo</th><th>Estado</th><th>Acciones</th>
+            <th>Insumo</th><th>Precio base</th><th>% Rep.</th><th>Precio real repos.</th><th>Stock</th><th>Mínimo</th><th>Estado</th><th>Acciones</th>
           </tr></thead>
           <tbody id="tablaInsumos"></tbody>
         </table>
@@ -372,7 +389,8 @@ tr:hover { background: #f8f9fa; }
         <select id="editTalla" onchange="toggleOtro('editTalla','editTallaOtro')"></select>
         <input type="text" id="editTallaOtro" class="otro-input" placeholder="Talla..." style="display:none;">
       </div>
-      <div class="form-group"><label>Precio compra</label><input type="number" id="editCompra" step="0.01" min="0"></div>
+      <div class="form-group"><label>Precio compra base</label><input type="number" id="editCompra" step="0.01" min="0"></div>
+      <div class="form-group"><label>% de reposición</label><input type="number" id="editRep" step="1" min="0"></div>
       <div class="form-group"><label>Precio venta</label><input type="number" id="editVenta" step="0.01" min="0"></div>
       <div class="form-group"><label>Cant. requerida</label><input type="number" id="editReq" min="0"></div>
       <div class="form-group"><label>Stock actual</label><input type="number" id="editStock" min="0"></div>
@@ -395,10 +413,10 @@ let lastSyncAt = 0;
 let syncing = false;
 
 const DEFAULT_SUPPLIES = [
-  { name: 'Etiqueta', stock: 50, minStock: 10, price: 0.10 },
-  { name: 'Bolsa', stock: 50, minStock: 10, price: 0.05 },
-  { name: 'Tarjeta de presentación', stock: 50, minStock: 10, price: 0.20 },
-  { name: 'Bolsa de empaque', stock: 50, minStock: 10, price: 0.15 }
+  { name: 'Etiqueta', stock: 50, minStock: 10, price: 0.10, repPct: 50 },
+  { name: 'Bolsa', stock: 50, minStock: 10, price: 0.05, repPct: 50 },
+  { name: 'Tarjeta de presentación', stock: 50, minStock: 10, price: 0.20, repPct: 50 },
+  { name: 'Bolsa de empaque', stock: 50, minStock: 10, price: 0.15, repPct: 50 }
 ];
 
 function updateStatusBar(text, cls) {
@@ -628,11 +646,14 @@ function renderProductos() {
   );
 
   let html = '';
-  let totalCompra = 0, totalVenta = 0;
+  let totalCompra = 0, totalVenta = 0, totalReal = 0, totalValorLote = 0, totalReponerFaltante = 0;
   for (const p of items) {
-    const suma = (p.purchasePrice||0) + (p.salePrice||0);
+    const real = precioRealRepos(p.purchasePrice||0, p);
     totalCompra += (p.purchasePrice||0);
     totalVenta += (p.salePrice||0);
+    totalReal += real;
+    totalValorLote += real * (p.stock||0);
+    totalReponerFaltante += Math.max(0, (p.requiredQty||0) - (p.stock||0)) * real;
     const bajo = (p.stock||0) < (p.requiredQty||0);
     html += `<tr>
       <td><strong>${esc(p.code)}</strong></td>
@@ -640,8 +661,9 @@ function renderProductos() {
       <td>${esc(p.color||'-')}</td>
       <td>${esc(p.talla||'-')}</td>
       <td>$${(p.purchasePrice||0).toFixed(2)}</td>
+      <td>${pctRepos(p)}%</td>
+      <td><strong>$${real.toFixed(2)}</strong></td>
       <td>$${(p.salePrice||0).toFixed(2)}</td>
-      <td><strong>$${suma.toFixed(2)}</strong></td>
       <td>${p.stock||0}</td>
       <td>${p.requiredQty||0}</td>
       <td>${bajo ? '<span class="badge badge-danger">¡Reponer!</span>' : '<span class="badge badge-success">OK</span>'}</td>
@@ -651,15 +673,26 @@ function renderProductos() {
       </td>
     </tr>`;
   }
-  const totSuma = totalCompra + totalVenta;
   html += `<tr class="total-row">
     <td colspan="4"><strong>TOTALES</strong></td>
     <td><strong>$${totalCompra.toFixed(2)}</strong></td>
+    <td></td>
+    <td><strong>$${totalReal.toFixed(2)}</strong></td>
     <td><strong>$${totalVenta.toFixed(2)}</strong></td>
-    <td><strong>$${totSuma.toFixed(2)}</strong></td>
     <td colspan="4"></td>
   </tr>`;
   tbody.innerHTML = html;
+
+  const sumBox = document.getElementById('sumatoriaRepos');
+  sumBox.innerHTML = `<div class="suma-item">
+      <span>Valor del inventario (lote) a precio real de reposición:</span>
+      <strong>$${totalValorLote.toFixed(2)}</strong>
+    </div>
+    <div class="suma-item suma-rojo">
+      <span>Dinero para completar el inventario mínimo (reponer faltante):</span>
+      <strong>$${totalReponerFaltante.toFixed(2)}</strong>
+    </div>
+    <div class="suma-item suma-note">Fórmula por prenda: Precio base × (1 + % reposición) — el % se edita por prenda.</div>`;
 
   const alertDiv = document.getElementById('alertasProductos');
   const bajos = data.products.filter(p => (p.stock||0) < (p.requiredQty||0));
@@ -693,14 +726,26 @@ function renderDisponibles() {
   tbody.innerHTML = html || '<tr><td colspan="6" style="text-align:center;color:#999;">No hay productos con stock</td></tr>';
 }
 
+function pctRepos(o) {
+  const v = parseFloat(o && o.repPct);
+  return isFinite(v) ? v : 50;
+}
+
+function precioRealRepos(base, o) {
+  return base * (1 + pctRepos(o) / 100);
+}
+
 function renderInsumos() {
   const tbody = document.getElementById('tablaInsumos');
   let html = '';
   for (const s of data.supplies) {
     const bajo = (s.stock||0) < (s.minStock||0);
+    const real = precioRealRepos(s.price||0, s);
     html += `<tr>
       <td><strong>${esc(s.name)}</strong></td>
       <td>$${(s.price||0).toFixed(2)}</td>
+      <td>${pctRepos(s)}%</td>
+      <td><strong>$${real.toFixed(2)}</strong></td>
       <td>${s.stock||0}</td>
       <td>${s.minStock||0}</td>
       <td>${bajo ? '<span class="badge badge-danger">¡Reponer!</span>' : '<span class="badge badge-success">OK</span>'}</td>
@@ -730,7 +775,7 @@ function renderPedidoForm() {
     const div = document.createElement('div');
     div.className = 'pedido-insumo-item';
     div.innerHTML = `<input type="checkbox" id="ins_cb_${i}" value="${esc(s.name)}" checked onchange="updateCostoInsumos()">
-      <label for="ins_cb_${i}">${esc(s.name)} <strong>$${(s.price||0).toFixed(2)}</strong> (${s.stock||0})</label>`;
+      <label for="ins_cb_${i}">${esc(s.name)} <strong>$${(s.price||0).toFixed(2)}</strong> · repos. $${precioRealRepos(s.price||0, s).toFixed(2)} (${s.stock||0})</label>`;
     list.appendChild(div);
   });
   updateCostoInsumos();
@@ -768,20 +813,23 @@ function verInfoPrenda() {
   const info = document.getElementById('prendaInfo');
   info.style.display = 'block';
   info.innerHTML = `<strong>${esc(p.code)}</strong> - ${esc(p.desc)} | ${esc(p.color||'-')} | Talla: ${esc(p.talla||'-')}<br>
-    Precio real (compra): <strong>$${(p.purchasePrice||0).toFixed(2)}</strong> | Precio venta: $${(p.salePrice||0).toFixed(2)} | Stock: ${p.stock||0}`;
+    Precio base: $${(p.purchasePrice||0).toFixed(2)} | % repos.: ${pctRepos(p)}% | Precio real repos.: <strong>$${precioRealRepos(p.purchasePrice||0, p).toFixed(2)}</strong> | Precio venta: $${(p.salePrice||0).toFixed(2)} | Stock: ${p.stock||0}`;
 }
 
 function updateCostoInsumos() {
-  let total = 0;
+  let total = 0, totalReal = 0;
   const checks = document.querySelectorAll('#pedidoInsumosList input[type="checkbox"]');
   for (const cb of checks) {
     if (cb.checked) {
       const name = cb.value;
       const s = data.supplies.find(x => x.name === name);
-      if (s) total += (s.price || 0);
+      if (s) {
+        total += (s.price || 0);
+        totalReal += precioRealRepos(s.price||0, s);
+      }
     }
   }
-  document.getElementById('insumosCosto').textContent = `Costo por prenda en insumos: $${total.toFixed(2)}`;
+  document.getElementById('insumosCosto').textContent = `Insumos por prenda: base $${total.toFixed(2)} — para reponer: $${totalReal.toFixed(2)}`;
   return total;
 }
 
@@ -794,17 +842,22 @@ function agregarASalida() {
 
   const usados = [];
   const checks = document.querySelectorAll('#pedidoInsumosList input[type="checkbox"]');
-  let costoIns = 0;
+  let costoIns = 0, costoInsReal = 0;
   for (const cb of checks) {
     if (cb.checked) {
       const name = cb.value;
       const s = data.supplies.find(x => x.name === name);
-      if (s) { usados.push(name); costoIns += (s.price||0); }
+      if (s) {
+        usados.push(name);
+        costoIns += (s.price||0);
+        costoInsReal += precioRealRepos(s.price||0, s);
+      }
     }
   }
 
   const realCompra = (p.purchasePrice||0) * qty;
   const costoInsumos = costoIns * qty;
+  const reponer = precioRealRepos(p.purchasePrice||0, p) * qty + costoInsReal * qty;
   salidaActual.push({
     code: p.code,
     desc: p.desc,
@@ -814,6 +867,7 @@ function agregarASalida() {
     realCompra,
     insumos: usados,
     costoInsumos,
+    reponer,
     total: realCompra + costoInsumos
   });
   renderSalidaLista();
@@ -836,9 +890,10 @@ function renderSalidaLista() {
   }
   empty.style.display = 'none';
   let html = '';
-  let granTotal = 0;
+  let granTotal = 0, granReponer = 0;
   salidaActual.forEach((it, i) => {
     granTotal += it.total;
+    granReponer += it.reponer;
     const prodTalla = `${esc(it.code)} - ${esc(it.desc)} ${it.color ? '(' + esc(it.color) + ')':''} — T.${esc(it.talla)}`;
     html += `<tr>
       <td>${prodTalla}</td>
@@ -851,7 +906,7 @@ function renderSalidaLista() {
   });
   tbody.innerHTML = html;
   document.getElementById('salidaTotal').textContent = '$' + granTotal.toFixed(2);
-  document.getElementById('salidaReponer').textContent = '$' + (granTotal * 1.5).toFixed(2) + ` (+50%: $${(granTotal*0.5).toFixed(2)})`;
+  document.getElementById('salidaReponer').textContent = '$' + granReponer.toFixed(2) + ' (con % de reposición por artículo)';
 }
 
 function vaciarSalida() {
@@ -881,6 +936,7 @@ function confirmarSalida() {
 
   // Descontar
   const granTotal = salidaActual.reduce((acc, a) => acc + a.total, 0);
+  const granReponer = salidaActual.reduce((acc, a) => acc + a.reponer, 0);
   const now = new Date();
   const dateStr = now.toLocaleDateString('es-ES') + ' ' + now.toLocaleTimeString('es-ES', { hour:'2-digit', minute:'2-digit' });
   const salidaId = Date.now() + '_' + Math.random().toString(36).slice(2, 7);
@@ -903,7 +959,8 @@ function confirmarSalida() {
       totalSalida: a.total,
       usedSupplies: a.insumos,
       granTotal,
-      reponer: granTotal * 1.5
+      granReponer,
+      reponer: a.reponer
     });
   }
 
@@ -911,7 +968,7 @@ function confirmarSalida() {
   salidaActual = [];
   document.getElementById('pedidoCant').value = '1';
   renderAll();
-  alert(`✅ Salida registrada. Total: $${granTotal.toFixed(2)} — Reponer: $${(granTotal*1.5).toFixed(2)}`);
+  alert(`✅ Salida registrada. Total: $${granTotal.toFixed(2)} — Reponer: $${granReponer.toFixed(2)}`);
 }
 
 function renderPedidos() {
@@ -932,12 +989,15 @@ function renderPedidos() {
   for (const g of grupos) {
     const detalle = g.items.map(o => `${esc(o.productCode)} - ${esc(o.productDesc)}(${esc(o.color||'-')}) T.${esc(o.talla||'-')} x${o.qty}`).join('<br>');
     const insumos = [...new Set(g.items.flatMap(o => o.usedSupplies||[]))].join(', ');
+    const reponer = (g.items[0] && g.items[0].granReponer != null)
+      ? g.items[0].granReponer
+      : (g.items[0] && g.items[0].reponer != null ? g.items[0].reponer : g.granTotal * 1.5);
     html += `<tr>
       <td>${esc(g.date)}</td>
       <td>${detalle}</td>
       <td>${g.items.reduce((a,o)=>a+o.qty,0)}</td>
       <td>$${g.total.toFixed(2)}</td>
-      <td>$${(g.granTotal*1.5).toFixed(2)}</td>
+      <td>$${reponer.toFixed(2)}</td>
       <td>${insumos ? esc(insumos) : 'Ninguno'}</td>
     </tr>`;
   }
@@ -959,8 +1019,10 @@ function guardarProducto() {
   if (!code) { alert('El código es obligatorio'); return; }
   if (!desc) { alert('La descripción es obligatoria'); return; }
 
+  const repPct = parseFloat(document.getElementById('prodRep').value);
+  const pct = isFinite(repPct) ? repPct : 50;
   const idx = data.products.findIndex(p => p.code === code);
-  const prod = { code, desc, color, talla, tallaType, purchasePrice, salePrice, requiredQty, stock };
+  const prod = { code, desc, color, talla, tallaType, purchasePrice, salePrice, requiredQty, stock, repPct: pct };
   if (idx >= 0) data.products[idx] = prod;
   else data.products.push(prod);
 
@@ -980,6 +1042,7 @@ function limpiarFormProducto() {
   document.getElementById('prodTallaOtro').style.display = 'none';
   document.getElementById('prodTallaOtro').value = '';
   document.getElementById('prodCompra').value = '';
+  document.getElementById('prodRep').value = '';
   document.getElementById('prodVenta').value = '';
   document.getElementById('prodReq').value = '';
   document.getElementById('prodStock').value = '';
@@ -1003,6 +1066,7 @@ function editarProducto(code) {
   actualizarEditTallas();
   setValorCampo('editTalla', 'editTallaOtro', p.talla, SIZE_OPTIONS[p.tallaType||'letras']);
   document.getElementById('editCompra').value = p.purchasePrice||0;
+  document.getElementById('editRep').value = pctRepos(p);
   document.getElementById('editVenta').value = p.salePrice||0;
   document.getElementById('editReq').value = p.requiredQty||0;
   document.getElementById('editStock').value = p.stock||0;
@@ -1022,12 +1086,14 @@ function guardarEdicion() {
 
   if (!code || !desc) { alert('Código y descripción obligatorios'); return; }
 
+  const repPct = parseFloat(document.getElementById('editRep').value);
+  const pct = isFinite(repPct) ? repPct : 50;
   if (code !== editingCode) {
     data.products = data.products.filter(p => p.code !== editingCode);
   } else {
     data.products = data.products.filter(p => p.code !== code);
   }
-  data.products.push({ code, desc, color, talla, tallaType, purchasePrice, salePrice, requiredQty, stock });
+  data.products.push({ code, desc, color, talla, tallaType, purchasePrice, salePrice, requiredQty, stock, repPct: pct });
   saveData();
   cerrarModal();
   renderAll();
@@ -1042,15 +1108,18 @@ function cerrarModal() {
 function guardarInsumo() {
   const name = document.getElementById('insName').value.trim();
   const price = parseFloat(document.getElementById('insPrice').value) || 0;
+  const repPct = parseFloat(document.getElementById('insRep').value);
   const stock = parseInt(document.getElementById('insStock').value) || 0;
   const minStock = parseInt(document.getElementById('insMin').value) || 0;
   if (!name) { alert('Nombre obligatorio'); return; }
+  const pct = isFinite(repPct) ? repPct : 50;
   const idx = data.supplies.findIndex(s => s.name.toLowerCase() === name.toLowerCase());
-  if (idx >= 0) data.supplies[idx] = { name, price, stock, minStock };
-  else data.supplies.push({ name, price, stock, minStock });
+  if (idx >= 0) data.supplies[idx] = { name, price, repPct: pct, stock, minStock };
+  else data.supplies.push({ name, price, repPct: pct, stock, minStock });
   saveData();
   document.getElementById('insName').value = '';
   document.getElementById('insPrice').value = '';
+  document.getElementById('insRep').value = '';
   document.getElementById('insStock').value = '';
   document.getElementById('insMin').value = '';
   renderAll();
@@ -1068,6 +1137,7 @@ function editarInsumo(name) {
   if (!s) return;
   document.getElementById('insName').value = s.name;
   document.getElementById('insPrice').value = s.price||0;
+  document.getElementById('insRep').value = pctRepos(s);
   document.getElementById('insStock').value = s.stock||0;
   document.getElementById('insMin').value = s.minStock||0;
   window.scrollTo({ top: 0, behavior: 'smooth' });
