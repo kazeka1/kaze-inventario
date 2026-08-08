@@ -41,6 +41,7 @@ input[type="number"] { -webkit-appearance: none; appearance: none; }
 .card h2 { margin-bottom: 16px; font-size: 17px; color: #000000; }
 
 .form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
+.form-group-fill { grid-column: 1 / -1; }
 .form-group { display: flex; flex-direction: column; gap: 3px; }
 .form-group label { font-size: 12px; font-weight: 600; color: #555; }
 .form-group input, .form-group select { padding: 9px 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; outline: none; transition: border .2s; background: #fff; }
@@ -351,13 +352,16 @@ body.dark .table-wrap thead th { background: #202024; }
     <div class="card">
       <div class="header-bar">
         <h2>Inventario completo (entradas · stock · salidas)</h2>
+        <div class="header-actions">
+          <button class="btn btn-sm btn-primary" onclick="abrirModalEntrada()">➕ Registrar entrada</button>
+        </div>
       </div>
       <div id="inventarioResumen" class="sumatoria-repos" style="margin-top:0;margin-bottom:14px;"></div>
       <h3 style="margin-bottom:10px;font-size:15px;">Prendas</h3>
       <div class="table-wrap">
         <table>
           <thead><tr>
-            <th>Producto</th><th>Tallas (stock)</th><th>Entradas</th><th>Stock actual</th><th>Salidas</th><th>Valor stock (repos.)</th>
+            <th>Producto</th><th>Tallas (stock)</th><th>Entradas</th><th>Stock actual</th><th>Salidas</th><th>Valor stock (repos.)</th><th>Historial</th>
           </tr></thead>
           <tbody id="tablaInvProductos"></tbody>
         </table>
@@ -366,7 +370,7 @@ body.dark .table-wrap thead th { background: #202024; }
       <div class="table-wrap">
         <table>
           <thead><tr>
-            <th>Insumo</th><th>Entradas</th><th>Stock actual</th><th>Salidas</th><th>Precio real repos.</th>
+            <th>Insumo</th><th>Entradas</th><th>Stock actual</th><th>Salidas</th><th>Precio real repos.</th><th>Historial</th>
           </tr></thead>
           <tbody id="tablaInvInsumos"></tbody>
         </table>
@@ -434,6 +438,7 @@ body.dark .table-wrap thead th { background: #202024; }
           <input type="date" id="filtroFecha" onchange="renderPedidos()" style="padding:8px 10px;border:1px solid #ddd;border-radius:8px;font-size:13px;">
           <button class="btn btn-sm btn-primary" onclick="filtrarHoy()">Hoy</button>
           <button class="btn btn-sm" style="background:#e5e7eb;" onclick="limpiarFiltroFecha()">Todas</button>
+          <button class="btn btn-sm" style="background:#e5e7eb;" onclick="abrirLimpiezaHistorial()">🗑️ Limpiar histórico antiguo</button>
         </div>
       </div>
       <div id="resumenFecha" class="sumatoria-repos" style="margin-top:0;margin-bottom:14px;"></div>
@@ -501,6 +506,75 @@ body.dark .table-wrap thead th { background: #202024; }
   </div>
 </div>
 
+<!-- Modal registrar entrada -->
+<div class="modal-overlay" id="modalEntrada">
+  <div class="modal" style="max-width:440px;">
+    <h2>Registrar entrada de mercancía</h2>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Tipo</label>
+        <select id="entradaTipo" onchange="cambiarTipoEntrada()">
+          <option value="product">Prenda</option>
+          <option value="supply">Insumo</option>
+        </select>
+      </div>
+      <div class="form-group form-group-fill">
+        <label id="entradaSelectorLabel">Prenda</label>
+        <select id="entradaSelector" onchange="cargarTallasEntrada()"></select>
+      </div>
+      <div class="form-group" id="entradaTallaWrap" style="display:none;">
+        <label>Talla</label>
+        <select id="entradaTalla"></select>
+      </div>
+      <div class="form-group">
+        <label>Cantidad</label>
+        <input type="number" id="entradaCant" min="1" value="1">
+      </div>
+      <div class="form-group">
+        <label>Fecha (cuándo entró)</label>
+        <input type="date" id="entradaFecha">
+      </div>
+      <div class="form-group form-group-fill">
+        <label>Nota (opcional)</label>
+        <input type="text" id="entradaNota" placeholder="Ej: compra a proveedor">
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-primary" onclick="guardarEntrada()">Guardar entrada</button>
+      <button class="btn btn-sm" style="background:#e5e7eb;" onclick="cerrarModalEntrada()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal historial de entradas -->
+<div class="modal-overlay" id="modalHistorial">
+  <div class="modal" style="max-width:480px;">
+    <h2 id="historialTitulo">Historial de entradas</h2>
+    <div id="historialBody" style="max-height:340px;overflow:auto;"></div>
+    <div class="form-actions">
+      <button class="btn btn-sm" style="background:#e5e7eb;" onclick="document.getElementById('modalHistorial').classList.remove('active')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal limpieza de historial -->
+<div class="modal-overlay" id="modalLimpieza">
+  <div class="modal" style="max-width:400px;">
+    <h2>🗑️ Limpiar histórico antiguo</h2>
+    <p style="font-size:13px;color:#666;">Se eliminarán todas las salidas (ventas) con fecha <strong>anterior</strong> a la elegida. Con esto el historial y la copia en la nube se hacen más pequenos. No afecta el stock actual ni los insumos.</p>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Fecha límite</label>
+        <input type="date" id="limpiezaFecha">
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-danger" onclick="ejecutarLimpiezaHistorial()">Eliminar anteriores</button>
+      <button class="btn btn-sm" style="background:#e5e7eb;" onclick="document.getElementById('modalLimpieza').classList.remove('active')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ===== SUPABASE CONFIG =====
 const SUPABASE_URL = 'https://jqtynumatfwhtrcriypy.supabase.co';
@@ -510,7 +584,7 @@ let useSync = false;
 let syncTimer = null;
 let lastSyncAt = 0;
 let syncing = false;
-const SYNC_INTERVAL_MS = 60000;
+const SYNC_INTERVAL_MS = 120000;
 
 const DEFAULT_SUPPLIES = [
   { name: 'Etiqueta', stock: 50, minStock: 10, price: 0.10, repPct: 50 },
@@ -557,6 +631,7 @@ async function supabasePing() {
 async function supabaseWrite(data) {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?id=eq.main`, {
     method: 'POST',
+    keepalive: true,
     headers: {
       'apikey': SUPABASE_KEY,
       'Authorization': 'Bearer ' + SUPABASE_KEY,
@@ -579,6 +654,7 @@ async function conectarSupabase() {
         products: (remote.data.products || []).map(migrarSizes),
         supplies: remote.data.supplies || DEFAULT_SUPPLIES,
         orders: remote.data.orders || [],
+        inbound: remote.data.inbound || [],
         appPin: remote.data.appPin || localStorage.getItem(PIN_KEY) || '',
         updatedAt: remote.data.updatedAt || Date.now()
       };
@@ -637,6 +713,7 @@ async function syncCheck() {
         products: (remote.data.products || []).map(migrarSizes),
         supplies: remote.data.supplies || DEFAULT_SUPPLIES,
         orders: remote.data.orders || [],
+        inbound: remote.data.inbound || data.inbound || [],
         appPin: remote.data.appPin || data.appPin || '',
         updatedAt: remote.data.updatedAt || remoteTime
       };
@@ -659,7 +736,7 @@ let data = { products: [], supplies: [], orders: [] };
 let editingCode = null;
 
 function getDefaultData() {
-  return { products: [], supplies: JSON.parse(JSON.stringify(DEFAULT_SUPPLIES)), orders: [], updatedAt: Date.now() };
+  return { products: [], supplies: JSON.parse(JSON.stringify(DEFAULT_SUPPLIES)), orders: [], inbound: [], updatedAt: Date.now() };
 }
 
 function loadData() {
@@ -668,6 +745,7 @@ function loadData() {
     if (saved) {
       data = JSON.parse(saved);
       if (!data.supplies || data.supplies.length === 0) data.supplies = JSON.parse(JSON.stringify(DEFAULT_SUPPLIES));
+      if (!data.inbound) data.inbound = [];
       data.products.forEach(migrarSizes);
       lastSyncAt = data.updatedAt || 0;
       return;
@@ -677,21 +755,44 @@ function loadData() {
   localStorage.setItem('kaze_inventario', JSON.stringify(data));
 }
 
+let saveTimer = null;
+
+function doCloudWrite() {
+  saveTimer = null;
+  if (!useSync) return;
+  if (syncTimer) clearInterval(syncTimer);
+  supabaseWrite(data).then((serverTime) => {
+    lastSyncAt = new Date(serverTime).getTime();
+    iniciarSync();
+  }).catch(() => {
+    iniciarSync();
+    updateStatusBar('<span class="dot dot-red"></span> ⚠️ No se pudo guardar en Supabase', 'status-error');
+    setTimeout(updateStatusBar, 5000);
+  });
+}
+
 function saveData(force) {
   data.updatedAt = Date.now();
   localStorage.setItem('kaze_inventario', JSON.stringify(data));
-  if (useSync) {
-    if (syncTimer) clearInterval(syncTimer);
-    supabaseWrite(data).then((serverTime) => {
-      lastSyncAt = new Date(serverTime).getTime();
-      iniciarSync();
-    }).catch(() => {
-      iniciarSync();
-      updateStatusBar('<span class="dot dot-red"></span> ⚠️ No se pudo guardar en Supabase', 'status-error');
-      setTimeout(updateStatusBar, 5000);
-    });
+  if (!useSync) return;
+  if (force) {
+    // Escritura inmediata (reseteo o primera subida a la nube)
+    if (saveTimer) { clearTimeout(saveTimer); saveTimer = null; }
+    doCloudWrite();
+  } else {
+    // Escrituras agrupadas en 1.5s: varios cambios rápidos = una sola subida
+    if (saveTimer) clearTimeout(saveTimer);
+    saveTimer = setTimeout(doCloudWrite, 1500);
   }
 }
+
+// Si cierras la pestaña con una escritura pendiente, se sube antes de salir
+window.addEventListener('pagehide', () => {
+  if (saveTimer) {
+    clearTimeout(saveTimer);
+    doCloudWrite();
+  }
+});
 
 function resetData() {
   data = getDefaultData();
@@ -981,53 +1082,214 @@ function renderDisponibles() {
   tbody.innerHTML = html || '<tr><td colspan="6" style="text-align:center;color:#999;">No hay productos con stock</td></tr>';
 }
 
+function entradasRegistradas(tipo, ref) {
+  return (data.inbound || []).filter(e => e.tipo === tipo && e.ref === ref).reduce((a, e) => a + e.qty, 0);
+}
+
 function renderInventario() {
   const tbodyP = document.getElementById('tablaInvProductos');
   const tbodyI = document.getElementById('tablaInvInsumos');
   if (!tbodyP || !tbodyI) return;
 
   let htmlP = '';
-  let eTot = 0, sTot = 0, stTot = 0, vTot = 0;
+  let eTot = 0, sTot = 0, stTot = 0, vTot = 0, regTot = 0;
   for (const p of data.products) {
     const st = stockTotal(p);
     const sal = data.orders.filter(o => o.productCode === p.code).reduce((a, o) => a + o.qty, 0);
-    const ent = sal + st;
+    const reg = entradasRegistradas('product', p.code);
+    const ent = reg > 0 ? reg : sal + st;
+    if (reg > 0) regTot++;
     const valor = precioRealRepos(p.purchasePrice||0, p) * st;
     eTot += ent; sTot += sal; stTot += st; vTot += valor;
     htmlP += `<tr>
       <td><strong>${esc(p.code)}</strong> - ${esc(p.desc||'')} ${esc(p.color||'')}</td>
       <td style="white-space:normal;">${esc(sizesText(p))}</td>
-      <td>${ent}</td>
+      <td title="${reg > 0 ? 'Entradas registradas' : 'Estimado (salidas + stock)'}">${ent}${reg > 0 ? '' : ' ~'}</td>
       <td><strong>${st}</strong></td>
       <td>${sal}</td>
       <td>$${valor.toFixed(2)}</td>
+      <td><button class="btn btn-sm" onclick="verHistorialEntradas('product','${esc(p.code)}')">📜</button></td>
     </tr>`;
   }
-  tbodyP.innerHTML = htmlP || '<tr><td colspan="6" style="text-align:center;color:#999;">Sin productos registrados</td></tr>';
+  tbodyP.innerHTML = htmlP || '<tr><td colspan="7" style="text-align:center;color:#999;">Sin productos registrados</td></tr>';
 
   let htmlI = '';
-  let ieTot = 0, isTot = 0, istTot = 0, ivTot = 0;
+  let ieTot = 0, isTot = 0, istTot = 0, ivTot = 0, iregTot = 0;
   for (const s of data.supplies) {
     const salAt = data.orders.reduce((a, o) => a + (((o.usedSupplies||[]).includes(s.name)) ? o.qty : 0), 0);
-    const entradas = salAt + (s.stock||0);
+    const reg = entradasRegistradas('supply', s.name);
+    const entradas = reg > 0 ? reg : salAt + (s.stock||0);
+    if (reg > 0) iregTot++;
     const real = precioRealRepos(s.price||0, s);
     ieTot += entradas; isTot += salAt; istTot += (s.stock||0); ivTot += real * (s.stock||0);
     htmlI += `<tr>
       <td><strong>${esc(s.name)}</strong></td>
-      <td>${entradas}</td>
+      <td title="${reg > 0 ? 'Entradas registradas' : 'Estimado (salidas + stock)'}">${entradas}${reg > 0 ? '' : ' ~'}</td>
       <td><strong>${s.stock||0}</strong></td>
       <td>${salAt}</td>
       <td>$${real.toFixed(2)}</td>
+      <td><button class="btn btn-sm" onclick="verHistorialEntradas('supply','${esc(s.name)}')">📜</button></td>
     </tr>`;
   }
-  tbodyI.innerHTML = htmlI || '<tr><td colspan="5" style="text-align:center;color:#999;">Sin insumos registrados</td></tr>';
+  tbodyI.innerHTML = htmlI || '<tr><td colspan="6" style="text-align:center;color:#999;">Sin insumos registrados</td></tr>';
 
   document.getElementById('inventarioResumen').innerHTML = `
-    <div class="suma-item"><span>Prendas — entradas totales:</span><strong>${eTot}</strong></div>
+    <div class="suma-item"><span>Prendas — entradas: ${eTot} (con ${regTot} con historial registrado)</span></div>
     <div class="suma-item"><span>Prendas — stock actual total:</span><strong>${stTot}</strong></div>
     <div class="suma-item suma-rojo"><span>Prendas — salidas totales:</span><strong>${sTot}</strong></div>
     <div class="suma-item"><span>Prendas — valor del stock (precio real de reposición):</span><strong>$${vTot.toFixed(2)}</strong></div>
-    <div class="suma-item suma-note" style="margin-top:6px;">Insumos — entradas: ${ieTot} · stock: ${istTot} · salidas: ${isTot} · valor stock: $${ivTot.toFixed(2)}</div>`;
+    <div class="suma-item suma-note" style="margin-top:6px;">Insumos — entradas: ${ieTot} (${iregTot} con historial) · stock: ${istTot} · salidas: ${isTot} · valor stock: $${ivTot.toFixed(2)}</div>`;
+}
+
+// ===== ENTRADAS DE MERCANCÍA (registro fechado con historial) =====
+function abrirModalEntrada() {
+  const modal = document.getElementById('modalEntrada');
+  document.getElementById('entradaFecha').value = fechaInputHoy();
+  document.getElementById('entradaNota').value = '';
+  document.getElementById('entradaCant').value = '1';
+  cambiarTipoEntrada();
+  modal.classList.add('active');
+}
+
+function cambiarTipoEntrada() {
+  const tipo = document.getElementById('entradaTipo').value;
+  const sel = document.getElementById('entradaSelector');
+  document.getElementById('entradaSelectorLabel').textContent = tipo === 'product' ? 'Prenda' : 'Insumo';
+  sel.innerHTML = tipo === 'product'
+    ? data.products.map(p => `<option value="${esc(p.code)}">${esc(p.code)} - ${esc(p.desc||'')} ${esc(p.color||'')}</option>`).join('')
+    : data.supplies.map(s => `<option value="${esc(s.name)}">${esc(s.name)}</option>`).join('') || '<option value="">¡No hay insumos!</option>';
+  cargarTallasEntrada();
+}
+
+function cargarTallasEntrada() {
+  const wrap = document.getElementById('entradaTallaWrap');
+  if (document.getElementById('entradaTipo').value !== 'product') { wrap.style.display = 'none'; return; }
+  const p = data.products.find(x => x.code === document.getElementById('entradaSelector').value);
+  if (p && p.sizes) {
+    const tallas = Object.keys(p.sizes);
+    if (tallas.length > 0) {
+      wrap.style.display = '';
+      document.getElementById('entradaTalla').innerHTML = tallas.map(t => `<option>${esc(t)}</option>`).join('') + '<option value="__TODAS__">Todas las tallas</option>';
+      return;
+    }
+  }
+  wrap.style.display = 'none';
+}
+
+function guardarEntrada() {
+  const tipo = document.getElementById('entradaTipo').value;
+  const ref = document.getElementById('entradaSelector').value;
+  const qty = parseInt(document.getElementById('entradaCant').value) || 0;
+  const fecha = document.getElementById('entradaFecha').value;
+  const nota = document.getElementById('entradaNota').value.trim();
+  if (!ref) { alert('Selecciona un artículo'); return; }
+  if (qty <= 0) { alert('La cantidad debe ser mayor que 0'); return; }
+  if (!fecha) { alert('Indica la fecha'); return; }
+  const talla = tipo === 'product' ? document.getElementById('entradaTalla').value : '';
+  if (!data.inbound) data.inbound = [];
+
+  if (tipo === 'product') {
+    const p = data.products.find(x => x.code === ref);
+    if (!p) return;
+    migrarSizes(p);
+    if (talla === '__TODAS__') {
+      Object.keys(p.sizes).forEach(t => { if (p.sizes[t] > 0) p.sizes[t] += qty; });
+      if (Object.keys(p.sizes).every(t => p.sizes[t] === 0)) p.sizes[Object.keys(p.sizes)[0]] = qty;
+    } else if (p.sizes && p.sizes[talla] !== undefined) {
+      p.sizes[talla] += qty;
+    } else {
+      p.stock = (p.stock || 0) + qty;
+    }
+    p.stock = stockTotal(p);
+  } else {
+    const s = data.supplies.find(x => x.name === ref);
+    if (!s) return;
+    s.stock = (s.stock || 0) + qty;
+  }
+
+  data.inbound.push({ id: Date.now() + '_' + Math.random().toString(36).slice(2, 7), tipo, ref, talla, qty, fecha, nota });
+  saveData();
+  document.getElementById('modalEntrada').classList.remove('active');
+  renderAll();
+  alert('✅ Entrada registrada');
+}
+
+function verHistorialEntradas(tipo, ref) {
+  const lista = (data.inbound || []).filter(e => e.tipo === tipo && e.ref === ref);
+  document.getElementById('historialTitulo').textContent = `Historial de entradas — ${ref}`;
+  let total = 0;
+  const rows = lista.map(e => {
+    total += e.qty;
+    return `<tr>
+      <td>${esc(e.fecha)}</td>
+      <td>${esc(e.talla || '—')}</td>
+      <td><strong>+${e.qty}</strong></td>
+      <td>${esc(e.nota || '')}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('historialBody').innerHTML = lista.length === 0
+    ? '<p style="color:#999;">Sin entradas registradas. Usa "➕ Registrar entrada".</p>'
+    : `<table>
+        <thead><tr><th>Fecha</th><th>Talla</th><th>Cant.</th><th>Nota</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <div class="sumatoria-repos" style="margin-top:10px;">
+        <div class="suma-item"><span>Total de entradas registradas:</span><strong>+${total}</strong></div>
+      </div>`;
+  document.getElementById('modalHistorial').classList.add('active');
+}
+
+function cerrarModalEntrada() {
+  document.getElementById('modalEntrada').classList.remove('active');
+}
+
+// ===== LIMPIEZA DE HISTORIAL ANTIGUO =====
+function abrirLimpiezaHistorial() {
+  document.getElementById('limpiezaFecha').value = '';
+  document.getElementById('modalLimpieza').classList.add('active');
+}
+
+function limpiarHistorialAntiguo(corte) {
+  const limite = new Date(corte);
+  data.orders = data.orders.filter(o => {
+    const d = parseDateEs(o.date);
+    return !d || d >= limite;
+  });
+}
+
+function parseDateEs(s) {
+  if (!s) return null;
+  const p = s.split(' ');
+  if (p.length === 0) return null;
+  const fe = p[0].split('/');
+  if (fe.length !== 3) return null;
+  const d = new Date(+fe[2], +fe[1] - 1, +fe[0]);
+  if (isNaN(d.getTime())) return null;
+  if (p.length > 1) {
+    const h = p[1].split(':');
+    if (h.length > 0) d.setHours(+h[0] || 0, +(h[1] || 0), 0, 0);
+  } else d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+function ejecutarLimpiezaHistorial() {
+  const f = document.getElementById('limpiezaFecha').value;
+  if (!f) { alert('Elige una fecha límite'); return; }
+  const p = f.split('-');
+  const limite = new Date(+p[0], +p[1] - 1, +p[2]);
+  if (isNaN(limite.getTime())) { alert('Fecha inválida'); return; }
+  const borradas = data.orders.filter(o => {
+    const d = parseDateEs(o.date);
+    return !!d && d < limite;
+  }).length;
+  if (borradas === 0) { alert('No hay salidas anteriores a esa fecha'); document.getElementById('modalLimpieza').classList.remove('active'); return; }
+  if (confirm(`¿Eliminar ${borradas} registro(s) de salidas anteriores a ${fechaInputToEs(f)}? Esto reducirá el tamaño del historial y de la copia en la nube.`)) {
+    limpiarHistorialAntiguo(f);
+    saveData(true);
+    document.getElementById('modalLimpieza').classList.remove('active');
+    renderAll();
+    alert('✅ Historial limpiado');
+  }
 }
 
 function pctRepos(o) {
@@ -1545,6 +1807,7 @@ function importarJSON(event) {
         if (confirm('¿Importar? Se reemplazarán los datos actuales.')) {
           imported.products.forEach(migrarSizes);
           imported.appPin = imported.appPin || localStorage.getItem(PIN_KEY) || '';
+          imported.inbound = imported.inbound || [];
           data = imported;
           saveData(true);
           renderAll();
