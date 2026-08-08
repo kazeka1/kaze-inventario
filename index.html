@@ -9,12 +9,12 @@
 <meta name="format-detection" content="telephone=no">
 <meta name="mobile-web-app-capable" content="yes">
 <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%231a1a2e'/%3E%3Ctext x='50' y='64' font-size='42' font-family='Arial' font-weight='bold' fill='white' text-anchor='middle'%3EK%3C/text%3E%3C/svg%3E">
-<link rel="manifest" href='data:application/manifest+json,{"name":"Kaze Inventario","short_name":"Kaze","start_url":".","display":"standalone","background_color":"#f0f2f5","theme_color":"#1a1a2e"}'>
+<link rel="manifest" href='data:application/manifest+json,{"name":"Kaze Inventario","short_name":"Kaze","start_url":".","display":"standalone","background_color":"#f0f2f5","theme_color":"#000000"}'>
 <title>Kaze - Sistema de Inventario</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html { -webkit-text-size-adjust: 100%; }
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f0f2f5; color: #333; padding: 20px; padding-left: max(20px, env(safe-area-inset-left)); padding-right: max(20px, env(safe-area-inset-right)); padding-top: max(20px, env(safe-area-inset-top)); padding-bottom: max(20px, env(safe-area-inset-bottom)); }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #ffffff; color: #1a1a1a; padding: 20px; padding-left: max(20px, env(safe-area-inset-left)); padding-right: max(20px, env(safe-area-inset-right)); padding-top: max(20px, env(safe-area-inset-top)); padding-bottom: max(20px, env(safe-area-inset-bottom)); }
 .container { max-width: 1200px; margin: 0 auto; }
 input, select, textarea { -webkit-appearance: none; appearance: none; border-radius: 8px; }
 input[type="checkbox"] { -webkit-appearance: checkbox; appearance: checkbox; }
@@ -33,23 +33,23 @@ input[type="number"] { -webkit-appearance: none; appearance: none; }
 .tabs { display: flex; gap: 4px; margin-bottom: 20px; background: #fff; border-radius: 12px; padding: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); flex-wrap: wrap; }
 .tab-btn { flex: 1; padding: 12px 16px; border: none; background: transparent; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; color: #666; transition: all .2s; min-width: 80px; }
 .tab-btn:hover { background: #f5f5f5; }
-.tab-btn.active { background: #1a1a2e; color: #fff; }
+.tab-btn.active { background: #000000; color: #fff; }
 .tab-content { display: none; }
 .tab-content.active { display: block; }
 
 .card { background: #fff; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-.card h2 { margin-bottom: 16px; font-size: 17px; color: #1a1a2e; }
+.card h2 { margin-bottom: 16px; font-size: 17px; color: #000000; }
 
 .form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
 .form-group { display: flex; flex-direction: column; gap: 3px; }
 .form-group label { font-size: 12px; font-weight: 600; color: #555; }
 .form-group input, .form-group select { padding: 9px 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; outline: none; transition: border .2s; background: #fff; }
 .form-group select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath d='M7 10l5 5 5-5' stroke='%23555' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 28px; }
-.form-group input:focus, .form-group select:focus { border-color: #1a1a2e; }
+.form-group input:focus, .form-group select:focus { border-color: #000000; }
 
 .btn { padding: 9px 18px; border: none; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; transition: all .2s; }
-.btn-primary { background: #1a1a2e; color: #fff; }
-.btn-primary:hover { background: #2d2d4a; }
+.btn-primary { background: #000000; color: #fff; }
+.btn-primary:hover { background: #333333; }
 .btn-success { background: #059669; color: #fff; }
 .btn-success:hover { background: #047857; }
 .btn-danger { background: #dc2626; color: #fff; }
@@ -78,7 +78,7 @@ tr:hover { background: #f8f9fa; }
 .pedido-insumo-item label { cursor: pointer; }
 
 .search-box { padding: 8px 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; width: 100%; max-width: 260px; outline: none; }
-.search-box:focus { border-color: #1a1a2e; }
+.search-box:focus { border-color: #000000; }
 
 .header-bar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; }
 .header-actions { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -102,12 +102,25 @@ tr:hover { background: #f8f9fa; }
 .setup-field { margin-bottom: 12px; }
 .setup-field label { display: block; font-size: 12px; font-weight: 600; color: #555; margin-bottom: 3px; }
 .setup-field input { width: 100%; padding: 9px 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; outline: none; }
-.setup-field input:focus { border-color: #1a1a2e; }
+.setup-field input:focus { border-color: #000000; }
 
 .otro-input { margin-top: 4px; }
 
+.pin-input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 18px; letter-spacing: 4px; text-align: center; margin-bottom: 10px; outline: none; background: #fff; }
+.pin-input:focus { border-color: #000000; }
+
+.sizes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 6px; }
+.talla-stock { display: flex; flex-direction: column; gap: 2px; }
+.talla-stock label { font-size: 11px; font-weight: 700; color: #444; }
+.talla-stock input { padding: 6px 8px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; width: 100%; box-sizing: border-box; }
+
+.chip-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.chip { padding: 7px 12px; border: 1.5px solid #000000; background: #fff; border-radius: 20px; font-size: 13px; font-weight: 700; cursor: pointer; min-height: 38px; display: inline-flex; align-items: center; }
+.chip.sel { background: #000000; color: #fff; }
+.chip:disabled, .chip.disabled { opacity: .45; cursor: not-allowed; border-color: #aaa; color: #999; }
+
 .step { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 8px; font-size: 13px; color: #555; }
-.step-num { background: #1a1a2e; color: #fff; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; }
+.step-num { background: #000000; color: #fff; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; }
 
 @media (max-width: 600px) {
   body { padding: 10px; }
@@ -120,9 +133,27 @@ tr:hover { background: #f8f9fa; }
 </style>
 </head>
 <body>
+<!-- Modal PIN de seguridad -->
+<div class="modal-overlay active" id="pinModal">
+  <div class="modal" style="max-width:360px;">
+    <h2><span id="pinTitleSetup">🔐 Crear PIN de seguridad</span><span id="pinTitleLogin" style="display:none;">🔒 Kaze - Protegido</span></h2>
+    <div id="pinSetupBox">
+      <p style="font-size:13px;color:#555;margin-bottom:10px;">Crea tu PIN de seguridad (mínimo 4 dígitos). Se usa en todos tus dispositivos.</p>
+      <input type="password" id="pinNew" class="pin-input" placeholder="Nuevo PIN" inputmode="numeric" autocomplete="off">
+      <input type="password" id="pinNew2" class="pin-input" placeholder="Repite el PIN" inputmode="numeric" autocomplete="off">
+      <button class="btn btn-primary" style="width:100%;" onclick="crearPin()">Crear PIN</button>
+    </div>
+    <div id="pinLoginBox" style="display:none;">
+      <p style="font-size:13px;color:#555;margin-bottom:10px;">Ingresa tu PIN para entrar:</p>
+      <input type="password" id="pinInput" class="pin-input" placeholder="PIN" inputmode="numeric" autocomplete="off">
+      <button class="btn btn-primary" style="width:100%;" onclick="validarPin()">Entrar</button>
+    </div>
+    <div id="pinError" class="alert alert-warning" style="display:none;margin-top:10px;"></div>
+  </div>
+</div>
 <div class="container">
   <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
-    <h1 style="font-size:22px;color:#1a1a2e;">Kaze - Inventario</h1>
+    <h1 style="font-size:22px;color:#000000;">Kaze - Inventario</h1>
   </div>
 
   <div id="statusBar" class="status-local"><span class="dot dot-yellow"></span> 💻 Conectando a Supabase...</div>
@@ -163,15 +194,15 @@ tr:hover { background: #f8f9fa; }
         <div class="form-group">
           <label>Tipo de talla</label>
           <select id="prodTallaType" onchange="actualizarTallas()">
+            <option value="">Elegir tipo...</option>
             <option value="letras">Letras (XS-XXL)</option>
             <option value="numeros">Números (calzado/pantalón)</option>
             <option value="unica">Única</option>
           </select>
         </div>
-        <div class="form-group">
-          <label>Talla</label>
-          <select id="prodTalla" onchange="toggleOtro('prodTalla','prodTallaOtro')"></select>
-          <input type="text" id="prodTallaOtro" class="otro-input" placeholder="Escribe la talla..." style="display:none;">
+        <div class="form-group" style="grid-column:1/-1;">
+          <label>Stock por talla (deja en 0 las tallas sin stock)</label>
+          <div id="prodSizesGrid" class="sizes-grid"></div>
         </div>
         <div class="form-group">
           <label>Precio de compra base ($)</label>
@@ -189,10 +220,6 @@ tr:hover { background: #f8f9fa; }
         <div class="form-group">
           <label>Cant. requerida (mín.)</label>
           <input type="number" id="prodReq" placeholder="10" min="0">
-        </div>
-        <div class="form-group">
-          <label>Stock actual</label>
-          <input type="number" id="prodStock" placeholder="0" min="0">
         </div>
       </div>
       <div class="form-actions">
@@ -306,7 +333,7 @@ tr:hover { background: #f8f9fa; }
       <div style="margin-top:14px;">
         <label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:6px;">2. Insumos usados por prenda (desmarca los que NO se usaron):</label>
         <div class="pedido-insumos" id="pedidoInsumosList"></div>
-        <div id="insumosCosto" style="font-size:13px;font-weight:700;color:#1a1a2e;margin-top:6px;"></div>
+        <div id="insumosCosto" style="font-size:13px;font-weight:700;color:#000000;margin-top:6px;"></div>
       </div>
     </div>
 
@@ -358,10 +385,11 @@ tr:hover { background: #f8f9fa; }
 
   <!-- Bottom bar -->
   <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:16px;padding:12px 0;border-top:1px solid #ddd;">
+    <button class="btn btn-sm" style="background:#e5e7eb;" onclick="abrirCambiarPin()">🔐 Cambiar PIN</button>
     <button class="btn btn-sm" style="background:#e5e7eb;" onclick="exportarJSON()">Exportar JSON</button>
     <button class="btn btn-sm" style="background:#e5e7eb;" onclick="document.getElementById('importFile').click()">Importar JSON</button>
     <input type="file" id="importFile" accept=".json" style="display:none" onchange="importarJSON(event)">
-    <button class="btn btn-sm btn-danger" onclick="if(confirm('¿Borrar todos los datos?')){resetData();}">Reiniciar</button>
+    <button class="btn btn-sm btn-danger" onclick="confirmarReset()">Reiniciar sistema</button>
   </div>
 </div>
 
@@ -392,16 +420,14 @@ tr:hover { background: #f8f9fa; }
           <option value="unica">Única</option>
         </select>
       </div>
-      <div class="form-group">
-        <label>Talla</label>
-        <select id="editTalla" onchange="toggleOtro('editTalla','editTallaOtro')"></select>
-        <input type="text" id="editTallaOtro" class="otro-input" placeholder="Talla..." style="display:none;">
+      <div class="form-group" style="grid-column:1/-1;">
+        <label>Stock por talla (deja en 0 las tallas sin stock)</label>
+        <div id="editSizesGrid" class="sizes-grid"></div>
       </div>
       <div class="form-group"><label>Precio compra base</label><input type="number" id="editCompra" step="0.01" min="0"></div>
       <div class="form-group"><label>% de reposición</label><input type="number" id="editRep" step="1" min="0"></div>
       <div class="form-group"><label>Precio venta</label><input type="number" id="editVenta" step="0.01" min="0"></div>
       <div class="form-group"><label>Cant. requerida</label><input type="number" id="editReq" min="0"></div>
-      <div class="form-group"><label>Stock actual</label><input type="number" id="editStock" min="0"></div>
     </div>
     <div class="form-actions">
       <button class="btn btn-primary" onclick="guardarEdicion()">Guardar</button>
@@ -471,14 +497,16 @@ async function conectarSupabase() {
     useSync = true;
     if (remote.data && remote.data.products) {
       data = {
-        products: remote.data.products || [],
+        products: (remote.data.products || []).map(migrarSizes),
         supplies: remote.data.supplies || DEFAULT_SUPPLIES,
         orders: remote.data.orders || [],
+        appPin: remote.data.appPin || localStorage.getItem(PIN_KEY) || '',
         updatedAt: remote.data.updatedAt || Date.now()
       };
       localStorage.setItem('kaze_inventario', JSON.stringify(data));
       lastSyncAt = remote.updated_at ? new Date(remote.updated_at).getTime() : data.updatedAt;
       renderAll();
+      if (pinModalAbierto()) evaluarPin();
     } else {
       data.updatedAt = Date.now();
       localStorage.setItem('kaze_inventario', JSON.stringify(data));
@@ -509,9 +537,10 @@ async function syncCheck() {
     const remoteTime = remote.updated_at ? new Date(remote.updated_at).getTime() : 0;
     if (remote.data && remoteTime > lastSyncAt) {
       data = {
-        products: remote.data.products || [],
+        products: (remote.data.products || []).map(migrarSizes),
         supplies: remote.data.supplies || DEFAULT_SUPPLIES,
         orders: remote.data.orders || [],
+        appPin: remote.data.appPin || data.appPin || '',
         updatedAt: remote.data.updatedAt || remoteTime
       };
       localStorage.setItem('kaze_inventario', JSON.stringify(data));
@@ -546,6 +575,7 @@ function loadData() {
     if (saved) {
       data = JSON.parse(saved);
       if (!data.supplies || data.supplies.length === 0) data.supplies = JSON.parse(JSON.stringify(DEFAULT_SUPPLIES));
+      data.products.forEach(migrarSizes);
       lastSyncAt = data.updatedAt || 0;
       return;
     }
@@ -576,6 +606,83 @@ function resetData() {
   renderAll();
 }
 
+// ===== SEGURIDAD (PIN) =====
+const PIN_KEY = 'kaze_pin';
+
+function pinModalAbierto() {
+  return document.getElementById('pinModal').classList.contains('active');
+}
+
+function evaluarPin() {
+  const local = localStorage.getItem(PIN_KEY);
+  const server = data && data.appPin;
+  const boxSetup = document.getElementById('pinSetupBox');
+  const boxLogin = document.getElementById('pinLoginBox');
+  const err = document.getElementById('pinError');
+  err.style.display = 'none';
+  if (!local && !server) {
+    document.getElementById('pinTitleSetup').style.display = 'block';
+    document.getElementById('pinTitleLogin').style.display = 'none';
+    boxSetup.style.display = 'block';
+    boxLogin.style.display = 'none';
+  } else {
+    document.getElementById('pinTitleSetup').style.display = 'none';
+    document.getElementById('pinTitleLogin').style.display = 'block';
+    boxSetup.style.display = 'none';
+    boxLogin.style.display = 'block';
+  }
+  document.getElementById('pinModal').classList.add('active');
+}
+
+function crearPin() {
+  const p1 = document.getElementById('pinNew').value.trim();
+  const p2 = document.getElementById('pinNew2').value.trim();
+  const err = document.getElementById('pinError');
+  if (p1.length < 4) { err.style.display = 'block'; err.textContent = 'El PIN debe tener al menos 4 dígitos'; return; }
+  if (p1 !== p2) { err.style.display = 'block'; err.textContent = 'Los PIN no coinciden'; return; }
+  err.style.display = 'none';
+  localStorage.setItem(PIN_KEY, p1);
+  data.appPin = p1;
+  saveData();
+  document.getElementById('pinNew').value = '';
+  document.getElementById('pinNew2').value = '';
+  document.getElementById('pinModal').classList.remove('active');
+}
+
+function validarPin() {
+  const input = document.getElementById('pinInput').value.trim();
+  const local = localStorage.getItem(PIN_KEY);
+  const server = data && data.appPin;
+  const err = document.getElementById('pinError');
+  if (input === local || (server && input === server)) {
+    if (!local) localStorage.setItem(PIN_KEY, input);
+    err.style.display = 'none';
+    document.getElementById('pinInput').value = '';
+    document.getElementById('pinModal').classList.remove('active');
+  } else {
+    err.style.display = 'block';
+    err.textContent = 'PIN incorrecto. Intenta de nuevo.';
+    document.getElementById('pinInput').value = '';
+  }
+}
+
+function abrirCambiarPin() {
+  const err = document.getElementById('pinError');
+  err.style.display = 'none';
+  document.getElementById('pinTitleSetup').style.display = 'block';
+  document.getElementById('pinTitleLogin').style.display = 'none';
+  document.getElementById('pinSetupBox').style.display = 'block';
+  document.getElementById('pinLoginBox').style.display = 'none';
+  document.getElementById('pinModal').classList.add('active');
+}
+
+function confirmarReset() {
+  if (!confirm('⚠️ ¿Seguro que quieres BORRAR TODOS los datos (productos, insumos y salidas) para empezar de nuevo?')) return;
+  if (!confirm('Última advertencia: se perderá TODO. ¿Continuar?')) return;
+  resetData();
+  alert('✅ Sistema reiniciado');
+}
+
 // ===== SIZES =====
 const SIZE_OPTIONS = {
   letras: ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'],
@@ -583,26 +690,69 @@ const SIZE_OPTIONS = {
   unica: ['Única']
 };
 
+function migrarSizes(p) {
+  if (!p.sizes) {
+    p.sizes = {};
+    const t = p.talla || 'Única';
+    p.sizes[t] = p.stock || 0;
+    p.talla = t;
+  }
+  p.stock = stockTotal(p);
+  return p;
+}
+
+function stockTotal(p) {
+  if (!p) return 0;
+  if (p.sizes) return Object.values(p.sizes).reduce((a, b) => a + (parseInt(b)||0), 0);
+  return p.stock || 0;
+}
+
+function sizesText(p) {
+  const s = p && p.sizes ? p.sizes : {};
+  const partes = Object.keys(s).map(t => `${esc(t)}:${s[t]||0}`);
+  return partes.length ? partes.join(' · ') : '-';
+}
+
+function renderSizesGrid(containerId, tipo, sizes) {
+  const cont = document.getElementById(containerId);
+  if (!cont) return;
+  cont.innerHTML = '';
+  if (!tipo) return;
+  const vals = SIZE_OPTIONS[tipo] || SIZE_OPTIONS.letras;
+  for (const t of vals) {
+    const val = sizes && sizes[t] != null ? sizes[t] : 0;
+    const w = document.createElement('div');
+    w.className = 'talla-stock';
+    const input = document.createElement('input');
+    input.type = 'number';
+    input.className = 'size-input';
+    input.dataset.talla = t;
+    input.value = val;
+    input.min = '0';
+    input.style.fontSize = '16px';
+    const label = document.createElement('label');
+    label.textContent = t;
+    w.appendChild(label);
+    w.appendChild(input);
+    cont.appendChild(w);
+  }
+}
+
+function leerGridSizes(containerId) {
+  const sizes = {};
+  document.querySelectorAll(`#${containerId} .size-input`).forEach(inp => {
+    sizes[inp.dataset.talla] = parseInt(inp.value) || 0;
+  });
+  return sizes;
+}
+
 function actualizarTallas() {
-  const type = document.getElementById('prodTallaType').value;
-  const select = document.getElementById('prodTalla');
-  const vals = SIZE_OPTIONS[type] || SIZE_OPTIONS.letras;
-  select.innerHTML = '<option value="">Seleccionar...</option>'
-    + vals.map(v => `<option>${v}</option>`).join('')
-    + '<option value="__OTRO__">Otro (personalizado)</option>';
-  select.value = '';
-  document.getElementById('prodTallaOtro').style.display = 'none';
+  const existing = leerGridSizes('prodSizesGrid');       // si hay valores guardados, preservarlos
+  renderSizesGrid('prodSizesGrid', document.getElementById('prodTallaType').value, existing);
 }
 
 function actualizarEditTallas() {
-  const type = document.getElementById('editTallaType').value;
-  const select = document.getElementById('editTalla');
-  const vals = SIZE_OPTIONS[type] || SIZE_OPTIONS.letras;
-  select.innerHTML = '<option value="">Seleccionar...</option>'
-    + vals.map(v => `<option>${v}</option>`).join('')
-    + '<option value="__OTRO__">Otro (personalizado)</option>';
-  select.value = '';
-  document.getElementById('editTallaOtro').style.display = 'none';
+  renderSizesGrid('editSizesGrid', document.getElementById('editTallaType').value, leerGridSizes('editSizesGrid'));
 }
 
 function toggleOtro(selectId, inputId) {
@@ -650,29 +800,31 @@ function renderProductos() {
   if (q) items = items.filter(p =>
     p.code.toLowerCase().includes(q) ||
     (p.desc||'').toLowerCase().includes(q) ||
-    (p.color||'').toLowerCase().includes(q)
+    (p.color||'').toLowerCase().includes(q) ||
+    sizesText(p).toLowerCase().includes(q)
   );
 
   let html = '';
   let totalCompra = 0, totalVenta = 0, totalReal = 0, totalValorLote = 0, totalReponerFaltante = 0;
   for (const p of items) {
     const real = precioRealRepos(p.purchasePrice||0, p);
+    const st = stockTotal(p);
     totalCompra += (p.purchasePrice||0);
     totalVenta += (p.salePrice||0);
     totalReal += real;
-    totalValorLote += real * (p.stock||0);
-    totalReponerFaltante += Math.max(0, (p.requiredQty||0) - (p.stock||0)) * real;
-    const bajo = (p.stock||0) < (p.requiredQty||0);
+    totalValorLote += real * st;
+    totalReponerFaltante += Math.max(0, (p.requiredQty||0) - st) * real;
+    const bajo = st < (p.requiredQty||0);
     html += `<tr>
       <td><strong>${esc(p.code)}</strong></td>
       <td>${esc(p.desc||'')}</td>
       <td>${esc(p.color||'-')}</td>
-      <td>${esc(p.talla||'-')}</td>
+      <td style="white-space:normal;">${esc(sizesText(p))}</td>
       <td>$${(p.purchasePrice||0).toFixed(2)}</td>
       <td>${pctRepos(p)}%</td>
       <td><strong>$${real.toFixed(2)}</strong></td>
       <td>$${(p.salePrice||0).toFixed(2)}</td>
-      <td>${p.stock||0}</td>
+      <td>${st}</td>
       <td>${p.requiredQty||0}</td>
       <td>${bajo ? '<span class="badge badge-danger">¡Reponer!</span>' : '<span class="badge badge-success">OK</span>'}</td>
       <td>
@@ -703,7 +855,7 @@ function renderProductos() {
     <div class="suma-item suma-note">Fórmula por prenda: Precio base × (1 + % reposición) — el % se edita por prenda.</div>`;
 
   const alertDiv = document.getElementById('alertasProductos');
-  const bajos = data.products.filter(p => (p.stock||0) < (p.requiredQty||0));
+  const bajos = data.products.filter(p => stockTotal(p) < (p.requiredQty||0));
   if (bajos.length > 0) {
     alertDiv.innerHTML = `<div class="alert alert-warning">⚠️ ${bajos.length} producto(s) necesitan reposición</div>`;
   } else {
@@ -714,11 +866,12 @@ function renderProductos() {
 function renderDisponibles() {
   const tbody = document.getElementById('tablaDisponibles');
   const q = document.getElementById('searchDisponibles').value.toLowerCase();
-  let items = data.products.filter(p => (p.stock||0) > 0);
+  let items = data.products.filter(p => stockTotal(p) > 0);
   if (q) items = items.filter(p =>
     p.code.toLowerCase().includes(q) ||
     (p.desc||'').toLowerCase().includes(q) ||
-    (p.color||'').toLowerCase().includes(q)
+    (p.color||'').toLowerCase().includes(q) ||
+    sizesText(p).toLowerCase().includes(q)
   );
   let html = '';
   for (const p of items) {
@@ -726,9 +879,9 @@ function renderDisponibles() {
       <td><strong>${esc(p.code)}</strong></td>
       <td>${esc(p.desc||'')}</td>
       <td>${esc(p.color||'-')}</td>
-      <td>${esc(p.talla||'-')}</td>
+      <td style="white-space:normal;">${esc(sizesText(p))}</td>
       <td>$${(p.salePrice||0).toFixed(2)}</td>
-      <td>${p.stock||0}</td>
+      <td>${stockTotal(p)}</td>
     </tr>`;
   }
   tbody.innerHTML = html || '<tr><td colspan="6" style="text-align:center;color:#999;">No hay productos con stock</td></tr>';
@@ -791,7 +944,8 @@ function renderPedidoForm() {
 
 // ===== LOGICA DE SALIDAS =====
 let salidaActual = []; // items de la salida
-let salidaSeleccion = null; // código seleccionado
+let salidaSeleccion = null; // producto seleccionado
+let salidaTallaSel = null; // talla seleccionada
 
 function renderSalidaSelect() {
   const select = document.getElementById('pedidoProducto');
@@ -801,27 +955,55 @@ function renderSalidaSelect() {
     p.code.toLowerCase().includes(q) ||
     (p.desc||'').toLowerCase().includes(q) ||
     (p.color||'').toLowerCase().includes(q) ||
-    (p.talla||'').toLowerCase().includes(q)
+    sizesText(p).toLowerCase().includes(q)
   );
   select.innerHTML = '<option value="">Seleccionar...</option>';
   for (const p of items) {
-    select.innerHTML += `<option value="${esc(p.code)}">${esc(p.code)} - ${esc(p.desc||'')} ${esc(p.color||'')} T:${esc(p.talla||'-')} (Stock: ${p.stock||0})</option>`;
+    select.innerHTML += `<option value="${esc(p.code)}">${esc(p.code)} - ${esc(p.desc||'')} ${esc(p.color||'')} | ${esc(sizesText(p))} (Stock: ${stockTotal(p)})</option>`;
   }
   if (items.length > 0) select.value = '';
   document.getElementById('prendaInfo').style.display = 'none';
   salidaSeleccion = null;
+  salidaTallaSel = null;
 }
 
 function verInfoPrenda() {
   const code = document.getElementById('pedidoProducto').value;
-  if (!code) { document.getElementById('prendaInfo').style.display = 'none'; salidaSeleccion = null; return; }
+  if (!code) {
+    document.getElementById('prendaInfo').style.display = 'none';
+    salidaSeleccion = null;
+    salidaTallaSel = null;
+    return;
+  }
   const p = data.products.find(x => x.code === code);
   if (!p) return;
   salidaSeleccion = p;
+  salidaTallaSel = null;
   const info = document.getElementById('prendaInfo');
   info.style.display = 'block';
-  info.innerHTML = `<strong>${esc(p.code)}</strong> - ${esc(p.desc)} | ${esc(p.color||'-')} | Talla: ${esc(p.talla||'-')}<br>
-    Precio base: $${(p.purchasePrice||0).toFixed(2)} | % repos.: ${pctRepos(p)}% | Precio real repos.: <strong>$${precioRealRepos(p.purchasePrice||0, p).toFixed(2)}</strong> | Precio venta: $${(p.salePrice||0).toFixed(2)} | Stock: ${p.stock||0}`;
+  let chips = '';
+  for (const t of Object.keys(p.sizes || {})) {
+    const st = p.sizes[t] || 0;
+    chips += `<button type="button" class="chip" data-talla="${esc(t)}" onclick="seleccionarTallaSalida('${esc(t)}')" ${st <= 0 ? 'disabled' : ''}>${esc(t)} (${st})</button>`;
+  }
+  info.innerHTML = `<strong>${esc(p.code)}</strong> - ${esc(p.desc)} | ${esc(p.color||'-')}<br>
+    Precio base: $${(p.purchasePrice||0).toFixed(2)} | % repos.: ${pctRepos(p)}% | Precio real repos.: <strong>$${precioRealRepos(p.purchasePrice||0, p).toFixed(2)}</strong> | Precio venta: $${(p.salePrice||0).toFixed(2)} | Stock total: ${stockTotal(p)}
+    <div style="margin-top:10px;"><strong>Tallas disponibles en stock (elige la talla vendida):</strong></div>
+    <div class="chip-wrap" id="tallasChips">${chips || '<span style="font-size:13px;color:#999;">No hay tallas registradas</span>'}</div>
+    <div id="tallaSelMsg" style="font-size:13px;font-weight:700;margin-top:6px;color:#dc2626;">Debes elegir una talla</div>`;
+}
+
+function seleccionarTallaSalida(talla) {
+  const p = salidaSeleccion;
+  if (!p) return;
+  salidaTallaSel = talla;
+  document.querySelectorAll('#tallasChips .chip').forEach(c => {
+    c.classList.toggle('sel', c.dataset.talla === talla);
+  });
+  const st = (p.sizes || {})[talla] || 0;
+  const msg = document.getElementById('tallaSelMsg');
+  msg.style.color = '#059669';
+  msg.textContent = `Talla ${talla} — disponible: ${st}`;
 }
 
 function updateCostoInsumos() {
@@ -843,10 +1025,12 @@ function updateCostoInsumos() {
 
 function agregarASalida() {
   if (!salidaSeleccion) { alert('Selecciona una prenda primero'); return; }
+  if (!salidaTallaSel) { alert('Elige la talla vendida (de las disponibles en stock)'); return; }
   const qty = parseInt(document.getElementById('pedidoCant').value) || 1;
   if (qty < 1) { alert('Cantidad inválida'); return; }
   const p = salidaSeleccion;
-  if ((p.stock||0) < qty) { alert(`Stock insuficiente: solo hay ${p.stock}`); return; }
+  const stTalla = (p.sizes && p.sizes[salidaTallaSel]) || 0;
+  if (stTalla < qty) { alert(`Stock insuficiente en talla ${salidaTallaSel}: solo hay ${stTalla}`); return; }
 
   const usados = [];
   const checks = document.querySelectorAll('#pedidoInsumosList input[type="checkbox"]');
@@ -870,7 +1054,7 @@ function agregarASalida() {
     code: p.code,
     desc: p.desc,
     color: p.color||'',
-    talla: p.talla||'-',
+    talla: salidaTallaSel,
     qty,
     realCompra,
     insumos: usados,
@@ -931,7 +1115,8 @@ function confirmarSalida() {
   for (const a of salidaActual) {
     const p = data.products.find(x => x.code === a.code);
     if (!p) { alert(`La prenda ${a.code} ya no existe`); return; }
-    if ((p.stock||0) < a.qty) { alert(`Stock insuficiente de ${a.code}: solo hay ${p.stock}`); return; }
+    const stTalla = (migrarSizes(p).sizes && p.sizes[a.talla]) || 0;
+    if (stTalla < a.qty) { alert(`Stock insuficiente de ${a.code} talla ${a.talla}: solo hay ${stTalla}`); return; }
   }
   for (const a of salidaActual) {
     for (const name of a.insumos) {
@@ -951,7 +1136,9 @@ function confirmarSalida() {
 
   for (const a of salidaActual) {
     const p = data.products.find(x => x.code === a.code);
-    p.stock = (p.stock||0) - a.qty;
+    migrarSizes(p);
+    p.sizes[a.talla] = Math.max(0, ((p.sizes && p.sizes[a.talla]) || 0) - a.qty);
+    p.stock = stockTotal(p);
     for (const name of a.insumos) {
       const s = data.supplies.find(x => x.name === name);
       if (s) s.stock = Math.max(0, (s.stock||0) - a.qty);
@@ -1063,20 +1250,21 @@ function guardarProducto() {
   const code = document.getElementById('prodCode').value.trim();
   const desc = document.getElementById('prodDesc').value.trim();
   const color = getValorCampo('prodColor', 'prodColorOtro');
-  const talla = getValorCampo('prodTalla', 'prodTallaOtro');
   const tallaType = document.getElementById('prodTallaType').value;
   const purchasePrice = parseFloat(document.getElementById('prodCompra').value) || 0;
   const salePrice = parseFloat(document.getElementById('prodVenta').value) || 0;
   const requiredQty = parseInt(document.getElementById('prodReq').value) || 0;
-  const stock = parseInt(document.getElementById('prodStock').value) || 0;
 
   if (!code) { alert('El código es obligatorio'); return; }
   if (!desc) { alert('La descripción es obligatoria'); return; }
+  if (!tallaType) { alert('Elige el tipo de talla'); return; }
 
   const repPct = parseFloat(document.getElementById('prodRep').value);
   const pct = isFinite(repPct) ? repPct : 50;
+  const sizes = leerGridSizes('prodSizesGrid');
+  const stock = Object.values(sizes).reduce((a, b) => a + b, 0);
   const idx = data.products.findIndex(p => p.code === code);
-  const prod = { code, desc, color, talla, tallaType, purchasePrice, salePrice, requiredQty, stock, repPct: pct };
+  const prod = { code, desc, color, tallaType, sizes, stock, purchasePrice, salePrice, requiredQty, repPct: pct };
   if (idx >= 0) data.products[idx] = prod;
   else data.products.push(prod);
 
@@ -1092,14 +1280,12 @@ function limpiarFormProducto() {
   document.getElementById('prodColor').value = '';
   document.getElementById('prodColorOtro').style.display = 'none';
   document.getElementById('prodColorOtro').value = '';
-  document.getElementById('prodTalla').value = '';
-  document.getElementById('prodTallaOtro').style.display = 'none';
-  document.getElementById('prodTallaOtro').value = '';
+  document.getElementById('prodTallaType').value = '';
+  renderSizesGrid('prodSizesGrid', '', {});
   document.getElementById('prodCompra').value = '';
   document.getElementById('prodRep').value = '';
   document.getElementById('prodVenta').value = '';
   document.getElementById('prodReq').value = '';
-  document.getElementById('prodStock').value = '';
 }
 
 function eliminarProducto(code) {
@@ -1117,13 +1303,11 @@ function editarProducto(code) {
   document.getElementById('editDesc').value = p.desc||'';
   setValorCampo('editColor', 'editColorOtro', p.color, ['Negro','Blanco','Azul','Rojo','Amarillo','Verde','Rosa','Gris','Naranja','Morado','Beige','Militar']);
   document.getElementById('editTallaType').value = p.tallaType || 'letras';
-  actualizarEditTallas();
-  setValorCampo('editTalla', 'editTallaOtro', p.talla, SIZE_OPTIONS[p.tallaType||'letras']);
+  renderSizesGrid('editSizesGrid', p.tallaType || 'letras', migrarSizes(p).sizes);
   document.getElementById('editCompra').value = p.purchasePrice||0;
   document.getElementById('editRep').value = pctRepos(p);
   document.getElementById('editVenta').value = p.salePrice||0;
   document.getElementById('editReq').value = p.requiredQty||0;
-  document.getElementById('editStock').value = p.stock||0;
   document.getElementById('modalEditar').classList.add('active');
 }
 
@@ -1131,23 +1315,24 @@ function guardarEdicion() {
   const code = document.getElementById('editCode').value.trim();
   const desc = document.getElementById('editDesc').value.trim();
   const color = getValorCampo('editColor', 'editColorOtro');
-  const talla = getValorCampo('editTalla', 'editTallaOtro');
   const tallaType = document.getElementById('editTallaType').value;
   const purchasePrice = parseFloat(document.getElementById('editCompra').value) || 0;
   const salePrice = parseFloat(document.getElementById('editVenta').value) || 0;
   const requiredQty = parseInt(document.getElementById('editReq').value) || 0;
-  const stock = parseInt(document.getElementById('editStock').value) || 0;
 
   if (!code || !desc) { alert('Código y descripción obligatorios'); return; }
+  if (!tallaType) { alert('Elige el tipo de talla'); return; }
 
   const repPct = parseFloat(document.getElementById('editRep').value);
   const pct = isFinite(repPct) ? repPct : 50;
+  const sizes = leerGridSizes('editSizesGrid');
+  const stock = Object.values(sizes).reduce((a, b) => a + b, 0);
   if (code !== editingCode) {
     data.products = data.products.filter(p => p.code !== editingCode);
   } else {
     data.products = data.products.filter(p => p.code !== code);
   }
-  data.products.push({ code, desc, color, talla, tallaType, purchasePrice, salePrice, requiredQty, stock, repPct: pct });
+  data.products.push({ code, desc, color, tallaType, sizes, stock, purchasePrice, salePrice, requiredQty, repPct: pct });
   saveData();
   cerrarModal();
   renderAll();
@@ -1215,6 +1400,8 @@ function importarJSON(event) {
       const imported = JSON.parse(e.target.result);
       if (imported.products && imported.supplies !== undefined && imported.orders) {
         if (confirm('¿Importar? Se reemplazarán los datos actuales.')) {
+          imported.products.forEach(migrarSizes);
+          imported.appPin = imported.appPin || localStorage.getItem(PIN_KEY) || '';
           data = imported;
           saveData(true);
           renderAll();
@@ -1243,6 +1430,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 actualizarTallas();
 actualizarEditTallas();
 loadData();
+evaluarPin();
 conectarSupabase();
 renderAll();
 </script>
