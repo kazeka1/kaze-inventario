@@ -241,13 +241,12 @@ body.dark .table-wrap thead th { background: #202024; }
           </select>
         </div>
         <div class="form-group">
-          <label>Tipo de talla</label>
+          <label>Tipo de talla (una por una)</label>
           <select id="prodTallaType" onchange="actualizarTallas()">
-            <option value="">Elegir tipo...</option>
-            <option value="letras">XS, S, M, L, XL, XXL</option>
-            <option value="unica">Talla única</option>
-            <option value="combinadas">XS-S, S-M, M-L, L-XL, XL-XXL</option>
-            <option value="numeros">Números (calzado/pantalón)</option>
+            <option value="">Elegir talla...</option>
+            <option>XS</option><option>S</option><option>M</option><option>L</option>
+            <option>XL</option><option>XXL</option><option>Talla única</option>
+            <option>XS-S</option><option>S-M</option><option>M-L</option><option>L-XL</option><option>XL-XXL</option>
           </select>
         </div>
         <div class="form-group" style="grid-column:1/-1;">
@@ -506,13 +505,8 @@ body.dark .table-wrap thead th { background: #202024; }
         </select>
       </div>
       <div class="form-group">
-        <label>Tipo de talla</label>
-        <select id="editTallaType" onchange="actualizarEditTallas()">
-          <option value="letras">XS, S, M, L, XL, XXL</option>
-          <option value="unica">Talla única</option>
-          <option value="combinadas">XS-S, S-M, M-L, L-XL, XL-XXL</option>
-          <option value="numeros">Números (calzado/pantalón)</option>
-        </select>
+        <label>Tipo de talla (una por una)</label>
+        <select id="editTallaType" onchange="actualizarEditTallas()"></select>
       </div>
       <div class="form-group" style="grid-column:1/-1;">
         <label>Stock por talla (deja en 0 las tallas sin stock)</label>
@@ -902,6 +896,7 @@ function confirmarReset() {
 }
 
 // ===== SIZES =====
+const ALL_TALLAS = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'Talla única', 'XS-S', 'S-M', 'M-L', 'L-XL', 'XL-XXL'];
 const SIZE_OPTIONS = {
   letras: ['XS', 'S', 'M', 'L', 'XL', 'XXL'],
   combinadas: ['XS-S', 'S-M', 'M-L', 'L-XL', 'XL-XXL'],
@@ -937,8 +932,10 @@ function renderSizesGrid(containerId, tipo, sizes) {
   if (!cont) return;
   cont.innerHTML = '';
   if (!tipo) return;
-  const vals = SIZE_OPTIONS[tipo] || SIZE_OPTIONS.letras;
+  let vals = SIZE_OPTIONS[tipo] || [tipo];
+  if (tipo === '__VARIAS__') vals = Object.keys(sizes || {}).filter(t => t != null && t !== '');
   for (const t of vals) {
+    if (t == null || t === '') continue;
     const val = sizes && sizes[t] != null ? sizes[t] : 0;
     const w = document.createElement('div');
     w.className = 'talla-stock';
@@ -1734,12 +1731,22 @@ function editarProducto(code) {
   const p = data.products.find(x => x.code === code);
   if (!p) return;
   editingCode = code;
+  const sizesObj = migrarSizes(p).sizes || {};
+  const keys = Object.keys(sizesObj).filter(k => k != null && k !== '');
+  const selTalla = document.getElementById('editTallaType');
+  let opts = ALL_TALLAS.map(t => `<option>${esc(t)}</option>`).join('');
+  if (keys.length > 1) opts = `<option value="__VARIAS__">Varias (${keys.join(', ')})</option>` + opts;
+  for (const k of keys) if (!ALL_TALLAS.includes(k) && k !== '__VARIAS__') opts += `<option>${esc(k)}</option>`;
+  selTalla.innerHTML = opts;
+  if (keys.length > 1) selTalla.value = '__VARIAS__';
+  else if (ALL_TALLAS.includes(keys[0])) selTalla.value = keys[0];
+  else selTalla.value = keys[0];
+
   document.getElementById('editCode').value = p.code;
   document.getElementById('editDesc').value = p.desc||'';
   setValorCampo('editColor', 'editColorOtro', p.color, ['Negro','Blanco','Azul','Rojo','Amarillo','Verde','Rosa','Gris','Naranja','Morado','Beige','Militar']);
   document.getElementById('editGenero').value = (p.genero && ['Dama','Caballero','Unisex','Niño','Niña'].includes(p.genero)) ? p.genero : '';
-  document.getElementById('editTallaType').value = p.tallaType || 'letras';
-  renderSizesGrid('editSizesGrid', p.tallaType || 'letras', migrarSizes(p).sizes);
+  renderSizesGrid('editSizesGrid', selTalla.value, sizesObj);
   document.getElementById('editCompra').value = p.purchasePrice||0;
   document.getElementById('editRep').value = pctRepos(p);
   document.getElementById('editVenta').value = p.salePrice||0;
