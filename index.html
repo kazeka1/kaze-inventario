@@ -106,6 +106,8 @@ tr:hover { background: #f8f9fa; }
 .setup-field input:focus { border-color: #000000; }
 
 .otro-input { margin-top: 4px; }
+.badge-tipo { display: inline-block; background: #eef2ff; color: #4338ca; font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 20px; margin-right: 4px; }
+body.dark .badge-tipo { background: #312e81; color: #c7d2fe; }
 
 .pin-input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 18px; letter-spacing: 4px; text-align: center; margin-bottom: 10px; outline: none; background: #fff; }
 .pin-input:focus { border-color: #000000; }
@@ -210,8 +212,21 @@ body.dark .table-wrap thead th { background: #202024; }
       <h2>Registrar / Editar producto</h2>
       <div class="form-grid" id="productoForm">
         <div class="form-group">
-          <label>Código</label>
-          <input type="text" id="prodCode" placeholder="Ej: P001">
+          <label>🔁 Código (se genera solo)</label>
+          <input type="text" id="prodCode" placeholder="Ej: CAM-NEG-DAMA-M" oninput="chequearCodigo()">
+          <div id="prodCodeWarn" style="display:none;font-size:12px;color:#dc2626;margin-top:4px;"></div>
+        </div>
+        <div class="form-group">
+          <label>Tipo de prenda</label>
+          <select id="prodTipo" onchange="toggleOtroTipo('prodTipo','prodTipoOtro');generarCodigo()">
+            <option value="">Seleccionar...</option>
+            <option>Camisa</option><option>Playera</option><option>Blusa</option><option>Polo</option>
+            <option>Vestido</option><option>Falda</option><option>Pantalón</option><option>Short</option>
+            <option>Suéter</option><option>Sudadera</option><option>Chamarra</option><option>Chaqueta</option>
+            <option>Ropa interior</option><option>Calcetines</option><option>Calzado</option><option>Accesorios</option>
+            <option value="__OTRO__">Otro (personalizado)</option>
+          </select>
+          <input type="text" id="prodTipoOtro" class="otro-input" placeholder="Escribe el tipo..." style="display:none;" oninput="generarCodigo()">
         </div>
         <div class="form-group">
           <label>Descripción</label>
@@ -219,7 +234,7 @@ body.dark .table-wrap thead th { background: #202024; }
         </div>
         <div class="form-group">
           <label>Color</label>
-          <select id="prodColor" onchange="toggleOtro('prodColor','prodColorOtro')">
+          <select id="prodColor" onchange="toggleOtro('prodColor','prodColorOtro');generarCodigo()">
             <option value="">Seleccionar...</option>
             <option>Negro</option><option>Blanco</option><option>Azul</option>
             <option>Rojo</option><option>Amarillo</option><option>Verde</option>
@@ -227,11 +242,11 @@ body.dark .table-wrap thead th { background: #202024; }
             <option>Morado</option><option>Beige</option><option>Militar</option>
             <option value="__OTRO__">Otro (personalizado)</option>
           </select>
-          <input type="text" id="prodColorOtro" class="otro-input" placeholder="Escribe el color..." style="display:none;">
+          <input type="text" id="prodColorOtro" class="otro-input" placeholder="Escribe el color..." style="display:none;" oninput="generarCodigo()">
         </div>
         <div class="form-group">
           <label>Género</label>
-          <select id="prodGenero">
+          <select id="prodGenero" onchange="generarCodigo()">
             <option value="">Seleccionar...</option>
             <option>Dama</option>
             <option>Caballero</option>
@@ -242,7 +257,7 @@ body.dark .table-wrap thead th { background: #202024; }
         </div>
         <div class="form-group">
           <label>Tipo de talla (una por una)</label>
-          <select id="prodTallaType" onchange="actualizarTallas()">
+          <select id="prodTallaType" onchange="actualizarTallas();generarCodigo()">
             <option value="">Elegir talla...</option>
             <option>XS</option><option>S</option><option>M</option><option>L</option>
             <option>XL</option><option>XXL</option><option>Talla única</option>
@@ -481,6 +496,18 @@ body.dark .table-wrap thead th { background: #202024; }
     <div class="form-grid" id="editarForm">
       <div class="form-group"><label>Código</label><input type="text" id="editCode"></div>
       <div class="form-group"><label>Descripción</label><input type="text" id="editDesc"></div>
+      <div class="form-group">
+        <label>Tipo de prenda</label>
+        <select id="editTipo" onchange="toggleOtroTipo('editTipo','editTipoOtro')">
+          <option value="">Seleccionar...</option>
+          <option>Camisa</option><option>Playera</option><option>Blusa</option><option>Polo</option>
+          <option>Vestido</option><option>Falda</option><option>Pantalón</option><option>Short</option>
+          <option>Suéter</option><option>Sudadera</option><option>Chamarra</option><option>Chaqueta</option>
+          <option>Ropa interior</option><option>Calcetines</option><option>Calzado</option><option>Accesorios</option>
+          <option value="__OTRO__">Otro (personalizado)</option>
+        </select>
+        <input type="text" id="editTipoOtro" class="otro-input" placeholder="Escribe el tipo..." style="display:none;">
+      </div>
       <div class="form-group">
         <label>Color</label>
         <select id="editColor" onchange="toggleOtro('editColor','editColorOtro')">
@@ -1014,6 +1041,49 @@ function toggleOtro(selectId, inputId) {
   if (select.value !== '__OTRO__') input.value = '';
 }
 
+function toggleOtroTipo(selectId, inputId) {
+  const select = document.getElementById(selectId);
+  const input = document.getElementById(inputId);
+  input.style.display = select.value === '__OTRO__' ? 'block' : 'none';
+  if (select.value !== '__OTRO__') input.value = '';
+  generarCodigo();
+}
+
+// ===== CÓDIGO AUTOMÁTICO estilo tienda: TIPO-COLOR-GENERO-TALLA =====
+const TIPO_ABR = { 'Camisa':'CAM','Playera':'PLA','Blusa':'BLU','Polo':'POL','Vestido':'VES','Falda':'FAL','Pantalón':'PAN','Short':'SHO','Suéter':'SUE','Sudadera':'SUD','Chamarra':'CHA','Chaqueta':'CHQ','Ropa interior':'RIN','Calcetines':'CAL','Calzado':'CALZ','Accesorios':'ACC' };
+const COLOR_ABR = { 'Negro':'NEG','Blanco':'BLA','Azul':'AZU','Rojo':'ROJ','Amarillo':'AMA','Verde':'VER','Rosa':'ROS','Gris':'GRI','Naranja':'NAR','Morado':'MOR','Beige':'BEI','Militar':'MIL' };
+const GENERO_ABR = { 'Dama':'DAMA','Caballero':'CAB','Unisex':'UNI','Niño':'NINO','Niña':'NINA' };
+
+function abrevTipo(t) { return TIPO_ABR[t] || (t || '').slice(0, 3).toUpperCase(); }
+function abrevColor(c) { return COLOR_ABR[c] || (c || '').slice(0, 3).toUpperCase(); }
+
+function generarCodigo() {
+  const tipo = getValorCampo('prodTipo', 'prodTipoOtro');
+  const color = getValorCampo('prodColor', 'prodColorOtro');
+  const genero = document.getElementById('prodGenero').value;
+  const talla = document.getElementById('prodTallaType').value;
+  if (tipo && color && genero && talla) {
+    document.getElementById('prodCode').value =
+      `${abrevTipo(tipo)}-${abrevColor(color)}-${GENERO_ABR[genero] || genero.toUpperCase()}-${talla.toUpperCase().replace(/\s+/g, '-')}`;
+  } else {
+    document.getElementById('prodCode').value = '';
+  }
+  chequearCodigo();
+}
+
+function chequearCodigo() {
+  const code = document.getElementById('prodCode').value.trim();
+  const warn = document.getElementById('prodCodeWarn');
+  if (!code) { warn.style.display = 'none'; return; }
+  const ex = data.products.find(p => p.code === code);
+  if (ex) {
+    warn.style.display = 'block';
+    warn.textContent = `⚠️ Ya existe: ${ex.desc||''} ${ex.color||''} ${ex.genero||''} (stock ${stockTotal(ex)}). Se reemplazará al guardar.`;
+  } else {
+    warn.style.display = 'none';
+  }
+}
+
 function getValorCampo(selectId, inputId) {
   const select = document.getElementById(selectId);
   if (select.value === '__OTRO__') return document.getElementById(inputId).value.trim();
@@ -1052,6 +1122,7 @@ function renderProductos() {
   let items = data.products;
   if (q) items = items.filter(p =>
     p.code.toLowerCase().includes(q) ||
+    (p.tipo||'').toLowerCase().includes(q) ||
     (p.desc||'').toLowerCase().includes(q) ||
     (p.color||'').toLowerCase().includes(q) ||
     (p.genero||'').toLowerCase().includes(q) ||
@@ -1071,7 +1142,7 @@ function renderProductos() {
     const bajo = st < (p.requiredQty||0);
     html += `<tr>
       <td><strong>${esc(p.code)}</strong></td>
-      <td>${esc(p.desc||'')}</td>
+      <td>${p.tipo ? '<span class="badge-tipo">' + esc(p.tipo) + '</span> ' : ''}${esc(p.desc||'')}</td>
       <td>${esc(p.color||'-')}</td>
       <td>${esc(p.genero||'-')}</td>
       <td style="white-space:normal;">${esc(sizesText(p))}</td>
@@ -1418,6 +1489,7 @@ function renderSalidaSelect() {
   let items = data.products;
   if (q) items = items.filter(p =>
     p.code.toLowerCase().includes(q) ||
+    (p.tipo||'').toLowerCase().includes(q) ||
     (p.desc||'').toLowerCase().includes(q) ||
     (p.color||'').toLowerCase().includes(q) ||
     (p.genero||'').toLowerCase().includes(q) ||
@@ -1425,7 +1497,7 @@ function renderSalidaSelect() {
   );
   select.innerHTML = '<option value="">Seleccionar...</option>';
   for (const p of items) {
-    select.innerHTML += `<option value="${esc(p.code)}">${esc(p.code)} - ${esc(p.desc||'')} ${esc(p.color||'')} ${esc(p.genero||'')} | ${esc(sizesText(p))} (Stock: ${stockTotal(p)})</option>`;
+    select.innerHTML += `<option value="${esc(p.code)}">${esc(p.code)} - ${esc(p.tipo||'')} ${esc(p.desc||'')} ${esc(p.color||'')} ${esc(p.genero||'')} | ${esc(sizesText(p))} (Stock: ${stockTotal(p)})</option>`;
   }
   if (items.length > 0) select.value = '';
   document.getElementById('prendaInfo').style.display = 'none';
@@ -1452,7 +1524,7 @@ function verInfoPrenda() {
     const st = p.sizes[t] || 0;
     chips += `<button type="button" class="chip" data-talla="${esc(t)}" onclick="seleccionarTallaSalida('${esc(t)}')" ${st <= 0 ? 'disabled' : ''}>${esc(t)} (${st})</button>`;
   }
-  info.innerHTML = `<strong>${esc(p.code)}</strong> - ${esc(p.desc)} | ${esc(p.color||'-')} | ${esc(p.genero||'-')}<br>
+  info.innerHTML = `<strong>${esc(p.code)}</strong> - ${p.tipo ? esc(p.tipo) + ' ' : ''}${esc(p.desc)} | ${esc(p.color||'-')} | ${esc(p.genero||'-')}<br>
     Precio base: $${(p.purchasePrice||0).toFixed(2)} | % repos.: ${pctRepos(p)}% | Precio real repos.: <strong>$${precioRealRepos(p.purchasePrice||0, p).toFixed(2)}</strong> | Precio venta: $${(p.salePrice||0).toFixed(2)} | Stock total: ${stockTotal(p)}
     <div style="margin-top:10px;"><strong>Tallas disponibles en stock (elige la talla vendida):</strong></div>
     <div class="chip-wrap" id="tallasChips">${chips || '<span style="font-size:13px;color:#999;">No hay tallas registradas</span>'}</div>
@@ -1715,6 +1787,7 @@ function detallePrevia(items) {
 function guardarProducto() {
   const code = document.getElementById('prodCode').value.trim();
   const desc = document.getElementById('prodDesc').value.trim();
+  const tipo = getValorCampo('prodTipo', 'prodTipoOtro');
   const color = getValorCampo('prodColor', 'prodColorOtro');
   const genero = document.getElementById('prodGenero').value;
   const tallaType = document.getElementById('prodTallaType').value;
@@ -1726,13 +1799,16 @@ function guardarProducto() {
   if (!desc) { alert('La descripción es obligatoria'); return; }
   if (!tallaType) { alert('Elige el tipo de talla'); return; }
 
+  if (code !== (document.getElementById('prodTipo').value || document.getElementById('prodTipoOtro').value.trim()) &&
+      !confirm(`Código "${code}" — ¿estás seguro de que es el correcto? (puedes generarlo con el tipo, color, género y talla)`)) return;
+
   const repPct = parseFloat(document.getElementById('prodRep').value);
   const pct = isFinite(repPct) ? repPct : 50;
   const sizes = leerGridSizes('prodSizesGrid');
   const stock = Object.values(sizes).reduce((a, b) => a + b, 0);
   const idx = data.products.findIndex(p => p.code === code);
   if (idx >= 0 && !confirm(`Ya existe un producto con el código "${code}" (${data.products[idx].desc||'sin descripción'}). ¿Reemplazarlo por los datos nuevos?`)) return;
-  const prod = { code, desc, color, genero, tallaType, sizes, stock, purchasePrice, salePrice, requiredQty, repPct: pct };
+  const prod = { code, desc, tipo, color, genero, tallaType, sizes, stock, purchasePrice, salePrice, requiredQty, repPct: pct };
   if (idx >= 0) data.products[idx] = prod;
   else data.products.push(prod);
 
@@ -1744,7 +1820,11 @@ function guardarProducto() {
 
 function limpiarFormProducto() {
   document.getElementById('prodCode').value = '';
+  document.getElementById('prodCodeWarn').style.display = 'none';
   document.getElementById('prodDesc').value = '';
+  document.getElementById('prodTipo').value = '';
+  document.getElementById('prodTipoOtro').style.display = 'none';
+  document.getElementById('prodTipoOtro').value = '';
   document.getElementById('prodColor').value = '';
   document.getElementById('prodColorOtro').style.display = 'none';
   document.getElementById('prodColorOtro').value = '';
@@ -1781,6 +1861,13 @@ function editarProducto(code) {
 
   document.getElementById('editCode').value = p.code;
   document.getElementById('editDesc').value = p.desc||'';
+  document.getElementById('editTipo').value = (p.tipo && ['Camisa','Playera','Blusa','Polo','Vestido','Falda','Pantalón','Short','Suéter','Sudadera','Chamarra','Chaqueta','Ropa interior','Calcetines','Calzado','Accesorios'].includes(p.tipo)) ? p.tipo : '';
+  document.getElementById('editTipoOtro').style.display = 'none';
+  if (p.tipo && !['Camisa','Playera','Blusa','Polo','Vestido','Falda','Pantalón','Short','Suéter','Sudadera','Chamarra','Chaqueta','Ropa interior','Calcetines','Calzado','Accesorios'].includes(p.tipo)) {
+    document.getElementById('editTipoOtro').value = p.tipo;
+    document.getElementById('editTipo').value = '__OTRO__';
+    document.getElementById('editTipoOtro').style.display = 'block';
+  }
   setValorCampo('editColor', 'editColorOtro', p.color, ['Negro','Blanco','Azul','Rojo','Amarillo','Verde','Rosa','Gris','Naranja','Morado','Beige','Militar']);
   document.getElementById('editGenero').value = (p.genero && ['Dama','Caballero','Unisex','Niño','Niña'].includes(p.genero)) ? p.genero : '';
   renderSizesGrid('editSizesGrid', selTalla.value, sizesObj);
@@ -1794,6 +1881,7 @@ function editarProducto(code) {
 function guardarEdicion() {
   const code = document.getElementById('editCode').value.trim();
   const desc = document.getElementById('editDesc').value.trim();
+  const tipo = getValorCampo('editTipo', 'editTipoOtro');
   const color = getValorCampo('editColor', 'editColorOtro');
   const genero = document.getElementById('editGenero').value;
   const tallaType = document.getElementById('editTallaType').value;
@@ -1813,7 +1901,7 @@ function guardarEdicion() {
   } else {
     data.products = data.products.filter(p => p.code !== code);
   }
-  data.products.push({ code, desc, color, genero, tallaType, sizes, stock, purchasePrice, salePrice, requiredQty, repPct: pct });
+  data.products.push({ code, desc, tipo, color, genero, tallaType, sizes, stock, purchasePrice, salePrice, requiredQty, repPct: pct });
   saveData();
   cerrarModal();
   renderAll();
