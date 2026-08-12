@@ -230,12 +230,24 @@ body.dark .table-wrap thead th { background: #202024; }
           <input type="text" id="prodColorOtro" class="otro-input" placeholder="Escribe el color..." style="display:none;">
         </div>
         <div class="form-group">
+          <label>Género</label>
+          <select id="prodGenero">
+            <option value="">Seleccionar...</option>
+            <option>Dama</option>
+            <option>Caballero</option>
+            <option>Unisex</option>
+            <option>Niño</option>
+            <option>Niña</option>
+          </select>
+        </div>
+        <div class="form-group">
           <label>Tipo de talla</label>
           <select id="prodTallaType" onchange="actualizarTallas()">
             <option value="">Elegir tipo...</option>
-            <option value="letras">Letras (XS-XXL)</option>
+            <option value="letras">XS, S, M, L, XL, XXL</option>
+            <option value="unica">Talla única</option>
+            <option value="combinadas">XS-S, S-M, M-L, L-XL, XL-XXL</option>
             <option value="numeros">Números (calzado/pantalón)</option>
-            <option value="unica">Única</option>
           </select>
         </div>
         <div class="form-group" style="grid-column:1/-1;">
@@ -275,7 +287,7 @@ body.dark .table-wrap thead th { background: #202024; }
       <div class="table-wrap">
         <table>
           <thead><tr>
-            <th>Código</th><th>Descripción</th><th>Color</th><th>Talla</th><th>Compra base</th><th>% Rep.</th><th>Precio real repos.</th><th>Venta</th><th>Stock</th><th>Req.</th><th>Estado</th><th>Acciones</th>
+            <th>Código</th><th>Descripción</th><th>Color</th><th>Género</th><th>Talla</th><th>Compra base</th><th>% Rep.</th><th>Precio real repos.</th><th>Venta</th><th>Stock</th><th>Req.</th><th>Estado</th><th>Acciones</th>
           </tr></thead>
           <tbody id="tablaProductos"></tbody>
         </table>
@@ -483,11 +495,23 @@ body.dark .table-wrap thead th { background: #202024; }
         <input type="text" id="editColorOtro" class="otro-input" placeholder="Color..." style="display:none;">
       </div>
       <div class="form-group">
+        <label>Género</label>
+        <select id="editGenero">
+          <option value="">Seleccionar...</option>
+          <option>Dama</option>
+          <option>Caballero</option>
+          <option>Unisex</option>
+          <option>Niño</option>
+          <option>Niña</option>
+        </select>
+      </div>
+      <div class="form-group">
         <label>Tipo de talla</label>
         <select id="editTallaType" onchange="actualizarEditTallas()">
-          <option value="letras">Letras (XS-XXL)</option>
+          <option value="letras">XS, S, M, L, XL, XXL</option>
+          <option value="unica">Talla única</option>
+          <option value="combinadas">XS-S, S-M, M-L, L-XL, XL-XXL</option>
           <option value="numeros">Números (calzado/pantalón)</option>
-          <option value="unica">Única</option>
         </select>
       </div>
       <div class="form-group" style="grid-column:1/-1;">
@@ -879,9 +903,10 @@ function confirmarReset() {
 
 // ===== SIZES =====
 const SIZE_OPTIONS = {
-  letras: ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'],
-  numeros: ['35', '36', '37', '38', '39', '40', '41', '42', '43', '44'],
-  unica: ['Única']
+  letras: ['XS', 'S', 'M', 'L', 'XL', 'XXL'],
+  combinadas: ['XS-S', 'S-M', 'M-L', 'L-XL', 'XL-XXL'],
+  unica: ['Única'],
+  numeros: ['35', '36', '37', '38', '39', '40', '41', '42', '43', '44']
 };
 
 function migrarSizes(p) {
@@ -996,6 +1021,7 @@ function renderProductos() {
     p.code.toLowerCase().includes(q) ||
     (p.desc||'').toLowerCase().includes(q) ||
     (p.color||'').toLowerCase().includes(q) ||
+    (p.genero||'').toLowerCase().includes(q) ||
     sizesText(p).toLowerCase().includes(q)
   );
 
@@ -1014,6 +1040,7 @@ function renderProductos() {
       <td><strong>${esc(p.code)}</strong></td>
       <td>${esc(p.desc||'')}</td>
       <td>${esc(p.color||'-')}</td>
+      <td>${esc(p.genero||'-')}</td>
       <td style="white-space:normal;">${esc(sizesText(p))}</td>
       <td>$${(p.purchasePrice||0).toFixed(2)}</td>
       <td>${pctRepos(p)}%</td>
@@ -1029,7 +1056,7 @@ function renderProductos() {
     </tr>`;
   }
   html += `<tr class="total-row">
-    <td colspan="4"><strong>TOTALES</strong></td>
+    <td colspan="5"><strong>TOTALES</strong></td>
     <td><strong>$${totalCompra.toFixed(2)}</strong></td>
     <td></td>
     <td><strong>$${totalReal.toFixed(2)}</strong></td>
@@ -1360,11 +1387,12 @@ function renderSalidaSelect() {
     p.code.toLowerCase().includes(q) ||
     (p.desc||'').toLowerCase().includes(q) ||
     (p.color||'').toLowerCase().includes(q) ||
+    (p.genero||'').toLowerCase().includes(q) ||
     sizesText(p).toLowerCase().includes(q)
   );
   select.innerHTML = '<option value="">Seleccionar...</option>';
   for (const p of items) {
-    select.innerHTML += `<option value="${esc(p.code)}">${esc(p.code)} - ${esc(p.desc||'')} ${esc(p.color||'')} | ${esc(sizesText(p))} (Stock: ${stockTotal(p)})</option>`;
+    select.innerHTML += `<option value="${esc(p.code)}">${esc(p.code)} - ${esc(p.desc||'')} ${esc(p.color||'')} ${esc(p.genero||'')} | ${esc(sizesText(p))} (Stock: ${stockTotal(p)})</option>`;
   }
   if (items.length > 0) select.value = '';
   document.getElementById('prendaInfo').style.display = 'none';
@@ -1391,7 +1419,7 @@ function verInfoPrenda() {
     const st = p.sizes[t] || 0;
     chips += `<button type="button" class="chip" data-talla="${esc(t)}" onclick="seleccionarTallaSalida('${esc(t)}')" ${st <= 0 ? 'disabled' : ''}>${esc(t)} (${st})</button>`;
   }
-  info.innerHTML = `<strong>${esc(p.code)}</strong> - ${esc(p.desc)} | ${esc(p.color||'-')}<br>
+  info.innerHTML = `<strong>${esc(p.code)}</strong> - ${esc(p.desc)} | ${esc(p.color||'-')} | ${esc(p.genero||'-')}<br>
     Precio base: $${(p.purchasePrice||0).toFixed(2)} | % repos.: ${pctRepos(p)}% | Precio real repos.: <strong>$${precioRealRepos(p.purchasePrice||0, p).toFixed(2)}</strong> | Precio venta: $${(p.salePrice||0).toFixed(2)} | Stock total: ${stockTotal(p)}
     <div style="margin-top:10px;"><strong>Tallas disponibles en stock (elige la talla vendida):</strong></div>
     <div class="chip-wrap" id="tallasChips">${chips || '<span style="font-size:13px;color:#999;">No hay tallas registradas</span>'}</div>
@@ -1655,6 +1683,7 @@ function guardarProducto() {
   const code = document.getElementById('prodCode').value.trim();
   const desc = document.getElementById('prodDesc').value.trim();
   const color = getValorCampo('prodColor', 'prodColorOtro');
+  const genero = document.getElementById('prodGenero').value;
   const tallaType = document.getElementById('prodTallaType').value;
   const purchasePrice = parseFloat(document.getElementById('prodCompra').value) || 0;
   const salePrice = parseFloat(document.getElementById('prodVenta').value) || 0;
@@ -1669,7 +1698,7 @@ function guardarProducto() {
   const sizes = leerGridSizes('prodSizesGrid');
   const stock = Object.values(sizes).reduce((a, b) => a + b, 0);
   const idx = data.products.findIndex(p => p.code === code);
-  const prod = { code, desc, color, tallaType, sizes, stock, purchasePrice, salePrice, requiredQty, repPct: pct };
+  const prod = { code, desc, color, genero, tallaType, sizes, stock, purchasePrice, salePrice, requiredQty, repPct: pct };
   if (idx >= 0) data.products[idx] = prod;
   else data.products.push(prod);
 
@@ -1685,6 +1714,7 @@ function limpiarFormProducto() {
   document.getElementById('prodColor').value = '';
   document.getElementById('prodColorOtro').style.display = 'none';
   document.getElementById('prodColorOtro').value = '';
+  document.getElementById('prodGenero').value = '';
   document.getElementById('prodTallaType').value = '';
   renderSizesGrid('prodSizesGrid', '', {});
   document.getElementById('prodCompra').value = '';
@@ -1707,6 +1737,7 @@ function editarProducto(code) {
   document.getElementById('editCode').value = p.code;
   document.getElementById('editDesc').value = p.desc||'';
   setValorCampo('editColor', 'editColorOtro', p.color, ['Negro','Blanco','Azul','Rojo','Amarillo','Verde','Rosa','Gris','Naranja','Morado','Beige','Militar']);
+  document.getElementById('editGenero').value = (p.genero && ['Dama','Caballero','Unisex','Niño','Niña'].includes(p.genero)) ? p.genero : '';
   document.getElementById('editTallaType').value = p.tallaType || 'letras';
   renderSizesGrid('editSizesGrid', p.tallaType || 'letras', migrarSizes(p).sizes);
   document.getElementById('editCompra').value = p.purchasePrice||0;
@@ -1720,6 +1751,7 @@ function guardarEdicion() {
   const code = document.getElementById('editCode').value.trim();
   const desc = document.getElementById('editDesc').value.trim();
   const color = getValorCampo('editColor', 'editColorOtro');
+  const genero = document.getElementById('editGenero').value;
   const tallaType = document.getElementById('editTallaType').value;
   const purchasePrice = parseFloat(document.getElementById('editCompra').value) || 0;
   const salePrice = parseFloat(document.getElementById('editVenta').value) || 0;
@@ -1737,7 +1769,7 @@ function guardarEdicion() {
   } else {
     data.products = data.products.filter(p => p.code !== code);
   }
-  data.products.push({ code, desc, color, tallaType, sizes, stock, purchasePrice, salePrice, requiredQty, repPct: pct });
+  data.products.push({ code, desc, color, genero, tallaType, sizes, stock, purchasePrice, salePrice, requiredQty, repPct: pct });
   saveData();
   cerrarModal();
   renderAll();
