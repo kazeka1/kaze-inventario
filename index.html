@@ -668,18 +668,18 @@ async function conectarSupabase() {
     const remote = await supabaseRead();
     useSync = true;
     if (remote.data && remote.data.products) {
-      data = {
-        products: (remote.data.products || []).map(migrarSizes),
-        supplies: remote.data.supplies || DEFAULT_SUPPLIES,
-        orders: remote.data.orders || [],
-        inbound: remote.data.inbound || [],
-        appPin: remote.data.appPin || localStorage.getItem(PIN_KEY) || '',
-        updatedAt: remote.data.updatedAt || Date.now()
-      };
-      localStorage.setItem('kaze_inventario', JSON.stringify(data));
-      lastSyncAt = remote.updated_at ? new Date(remote.updated_at).getTime() : data.updatedAt;
-      renderAll();
-      if (pinModalAbierto()) evaluarPin();
+      // Fusionar SIEMPRE: la unión conserva productos de ambos lados
+      data = mergeData(remote.data);
+      if ((data.updatedAt || 0) > (remote.data.updatedAt || 0)) {
+        // Lo local es MÁS nuevo que la nube (p. ej. cerraste antes de subir): subir fusionado
+        data.updatedAt = Date.now();
+        saveData(true);
+      } else {
+        localStorage.setItem('kaze_inventario', JSON.stringify(data));
+        lastSyncAt = remote.updated_at ? new Date(remote.updated_at).getTime() : data.updatedAt;
+        renderAll();
+        if (pinModalAbierto()) evaluarPin();
+      }
     } else {
       data.updatedAt = Date.now();
       localStorage.setItem('kaze_inventario', JSON.stringify(data));
@@ -727,26 +727,62 @@ async function syncCheck() {
     if (remoteTime <= lastSyncAt) return; // sin cambios: cero descargas innecesarias
     const remote = await supabaseRead();
     if (remote.data && remote.data.products) {
-      data = {
-        products: (remote.data.products || []).map(migrarSizes),
-        supplies: remote.data.supplies || DEFAULT_SUPPLIES,
-        orders: remote.data.orders || [],
-        inbound: remote.data.inbound || data.inbound || [],
-        appPin: remote.data.appPin || data.appPin || '',
-        updatedAt: remote.data.updatedAt || remoteTime
-      };
-      localStorage.setItem('kaze_inventario', JSON.stringify(data));
-      lastSyncAt = remoteTime;
-      renderAll();
-      const bar = document.getElementById('statusBar');
-      bar.innerHTML = '<span class="dot dot-blue"></span> 🐘 Sincronizado con Supabase (actualizado)';
-      setTimeout(updateStatusBar, 3000);
+      if ((data.updatedAt || 0) > (remote.data.updatedAt || 0)) {
+        // Lo local es más nuevo que la nube: subir local (evita perder el último cambio)
+        data.updatedAt = Date.now();
+        saveData(false);
+      } else {
+        data = mergeData(remote.data);
+        localStorage.setItem('kaze_inventario', JSON.stringify(data));
+        lastSyncAt = remoteTime;
+        renderAll();
+        const bar = document.getElementById('statusBar');
+        bar.innerHTML = '<span class="dot dot-blue"></span> 🐘 Sincronizado con Supabase (actualizado)';
+        setTimeout(updateStatusBar, 3000);
+      }
     }
   } catch(e) {
     updateStatusBar('<span class="dot dot-red"></span> ⚠️ Error de conexión con Supabase', 'status-error');
     setTimeout(updateStatusBar, 5000);
   }
   syncing = false;
+}
+
+// FUSIÓN local + nube: nunca borra productos/insumos/ventas locales aunque la nube sea "antigua"
+function mergeData(remoteData) {
+  const remote = remoteData || {};
+  const local = data || {};
+  const ri = remote.products || [], li = local.products || [];
+  const productsMap = new Map();
+  ri.forEach(p => productsMap.set(p.code, p));
+  li.forEach(p => { if (!productsMap.has(p.code)) productsMap.set(p.code, p); });
+  const rs = remote.supplies || [], ls = local.supplies || [];
+  const suppliesMap = new Map();
+  rs.forEach(s => suppliesMap.set(s.name, s));
+  ls.forEach(s => { if (!suppliesMap.has(s.name)) suppliesMap.set(s.name, s); });
+
+  const ordersMap = new Map();
+  (remote.orders || []).forEach(o => {
+    const k = o.salidaId ? o.salidaId + ':' + o.productCode + ':' + o.talla : JSON.stringify(o);
+    ordersMap.set(k, o);
+  });
+  (local.orders || []).forEach(o => {
+    const k = o.salidaId ? o.salidaId + ':' + o.productCode + ':' + o.talla : JSON.stringify(o);
+    if (!ordersMap.has(k)) ordersMap.set(k, o);
+  });
+
+  const inboundMap = new Map();
+  (remote.inbound || []).forEach(e => inboundMap.set(e.id || JSON.stringify(e), e));
+  (local.inbound || []).forEach(e => { const k = e.id || JSON.stringify(e); if (!inboundMap.has(k)) inboundMap.set(k, e); });
+
+  return {
+    products: [...productsMap.values()].map(migrarSizes),
+    supplies: [...suppliesMap.values()],
+    orders: [...ordersMap.values()],
+    inbound: [...inboundMap.values()],
+    appPin: remote.appPin || local.appPin || '',
+    updatedAt: Math.max(remote.updatedAt || 0, local.updatedAt || 0)
+  };
 }
 
 // ===== DATA =====
@@ -1695,6 +1731,7 @@ function guardarProducto() {
   const sizes = leerGridSizes('prodSizesGrid');
   const stock = Object.values(sizes).reduce((a, b) => a + b, 0);
   const idx = data.products.findIndex(p => p.code === code);
+  if (idx >= 0 && !confirm(`Ya existe un producto con el código "${code}" (${data.products[idx].desc||'sin descripción'}). ¿Reemplazarlo por los datos nuevos?`)) return;
   const prod = { code, desc, color, genero, tallaType, sizes, stock, purchasePrice, salePrice, requiredQty, repPct: pct };
   if (idx >= 0) data.products[idx] = prod;
   else data.products.push(prod);
